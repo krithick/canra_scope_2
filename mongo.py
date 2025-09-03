@@ -33,9 +33,9 @@ class MongoDB:
         self.analysis=self.db.analysis
         self.bot_configs=self.db.bot_configs
         self.bot_configs_analyser=self.db.bot_configs_analyser
-        self.question_scenarios = self.db.question_scenarios
-        self.question_chat_sessions = self.db.question_chat_sessions  
-        self.paraphrased_questions = self.db.paraphrased_questions
+        # self.question_scenarios = self.db.question_scenarios
+        # self.question_chat_sessions = self.db.question_chat_sessions  
+        # self.paraphrased_questions = self.db.paraphrased_questions
         
     async def create_session(self, session: ChatSession) -> str:
         await self.sessions.insert_one(session.dict())
@@ -112,15 +112,58 @@ class MongoDB:
             print(f"Error saving question session: {e}")
             raise
 
-    async def get_question_session(self, session_id: str) -> Optional[QuestionSession]:
-        """Get question session by ID"""
+    async def get_question_session(self, session_id: str):
+        """Get question session by session_id"""
         try:
-            session_data = await self.question_chat_sessions.find_one({"session_id": session_id})
-            return QuestionSession(**session_data) if session_data else None
+            collection = self.db["question_chat_sessions"]
+            session_data = await collection.find_one({"session_id": session_id})
+            if session_data:
+                from models import QuestionSession
+                return QuestionSession(**session_data)
+            return None
         except Exception as e:
             print(f"Error getting question session: {e}")
             return None
 
+    async def update_question_session(self, session: "QuestionSession"):
+        """Update existing question session"""
+        try:
+            from datetime import datetime
+            collection = self.db["question_chat_sessions"]
+            session.last_updated = datetime.now()
+            await collection.update_one(
+            {"session_id": session.session_id},
+            {"$set": session.dict()}
+            )
+            print(f"Updated question session: {session.session_id}")
+        except Exception as e:
+            print(f"Error updating question session: {e}")
+            raise   
+    @property
+    def question_chat_sessions(self):
+        """Access to question chat sessions collection"""
+        return self.db["question_chat_sessions"]
+
+    # Add these scenario-related methods if they don't exist
+    @property
+    def question_scenarios(self):
+        """Access to question scenarios collection"""
+        return self.db["question_scenarios"]
+
+    @property
+    def paraphrased_questions(self):
+        """Access to paraphrased questions collection"""
+        return self.db["paraphrased_questions"]   
+    async def create_question_session(self, session: "QuestionSession"):
+        """Create new question session"""
+        try:
+            collection = self.db["question_chat_sessions"]
+            await collection.insert_one(session.dict())
+            print(f"Created question session: {session.session_id}")
+        except Exception as e:
+            print(f"Error creating question session: {e}")
+            raise
+        
     async def get_question_session_by_conversation(self, conversation_history: List[Message]) -> Optional[QuestionSession]:
         """Get session by analyzing conversation history"""
         try:

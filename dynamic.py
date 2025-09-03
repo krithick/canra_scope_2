@@ -253,7 +253,7 @@ async def refresh_bots():
     await bot_factory.initialize_bots()
     await bot_factory_analyser.initialize_bots_analyser()
 
-# ===== SCENARIO MANAGEMENT APIS =====
+#  ===== SCENARIO MANAGEMENT APIS =====
 
 @app.post("/api/question-scenarios/create")
 async def create_question_scenario(
@@ -312,17 +312,16 @@ async def upload_scenario_from_json(
     file: UploadFile = File(...),
     db: MongoDB = Depends(get_db)
 ):
-    """Upload scenario from your existing JSON structure"""
-    print('hiii')
+    """Upload scenario from existing JSON structure"""
     try:
         content = await file.read()
         data = json.loads(content.decode('utf-8'))
         
-        # Extract from your JSON structure
+        # Extract from JSON structure
         training_data = data["training_scenarios"]
         metadata = training_data["scenario_metadata"]
         
-        # Convert your JSON to our format
+        # Convert JSON to our format
         all_questions = []
         for level_name, level_data in training_data["question_sets"].items():
             for q in level_data["questions"]:
@@ -393,216 +392,6 @@ async def list_question_scenarios(db: MongoDB = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing scenarios: {str(e)}")
 
-# ===== PARAPHRASING MANAGEMENT =====
-
-@app.post("/api/questions/generate-paraphrases")
-async def generate_question_paraphrases(
-    scenario_name: str = Form(...),
-    difficulty: str = Form(..., description="easy or hard"),
-    force_regenerate: bool = Form(default=False),
-    db: MongoDB = Depends(get_db)
-):
-    """Generate paraphrased versions of all questions in a scenario"""
-    try:
-        # Get the bot for this scenario
-        bot = await bot_factory.get_bot(scenario_name)
-        if not isinstance(bot, QuestionBot):
-            raise HTTPException(status_code=400, detail="Not a question bot scenario")
-        
-        results = []
-        for question in bot.scenario_questions:
-            # Check if paraphrase already exists
-            if not force_regenerate:
-                existing = await db.paraphrased_questions.find_one({
-                    "original_question_id": question["id"],
-                    "scenario_name": scenario_name,
-                    "difficulty": difficulty
-                })
-                if existing:
-                    results.append({"question_id": question["id"], "status": "already_exists"})
-                    continue
-            
-            # Generate new paraphrase
-            try:
-                paraphrased = await bot._paraphrase_with_llm(question, difficulty)
-                
-                # Cache the result
-                cache_doc = ParaphrasedQuestionCache(
-                    original_question_id=question["id"],
-                    scenario_name=scenario_name,
-                    difficulty=difficulty,
-                    paraphrased_data=paraphrased
-                )
-                await db.paraphrased_questions.insert_one(cache_doc.dict())
-                
-                results.append({"question_id": question["id"], "status": "generated"})
-                
-            except Exception as e:
-                results.append({"question_id": question["id"], "status": "error", "error": str(e)})
-        
-        return {
-            "scenario_name": scenario_name,
-            "difficulty": difficulty,
-            "total_questions": len(bot.scenario_questions),
-            "results": results,
-            "summary": {
-                "generated": len([r for r in results if r["status"] == "generated"]),
-                "already_existed": len([r for r in results if r["status"] == "already_exists"]),
-                "errors": len([r for r in results if r["status"] == "error"])
-            }
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating paraphrases: {str(e)}")
-
-@app.get("/api/questions/{scenario_name}/paraphrases")
-async def get_scenario_paraphrases(
-    scenario_name: str,
-    difficulty: str = "easy",
-    db: MongoDB = Depends(get_db)
-):
-    """Get all paraphrased questions for a scenario"""
-    try:
-        paraphrases = await db.paraphrased_questions.find({
-            "scenario_name": scenario_name,
-            "difficulty": difficulty,
-            "is_active": True
-        }).to_list(length=None)
-        
-        return {
-            "scenario_name": scenario_name,
-            "difficulty": difficulty,
-            "paraphrases": paraphrases
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting paraphrases: {str(e)}")
-
-# ===== SESSION ANALYTICS =====
-
-@app.get("/api/question-sessions/{session_id}/progress")
-async def get_question_session_progress(
-    session_id: str,
-    db: MongoDB = Depends(get_db)
-):
-    """Get current progress of a question session"""
-    try:
-        session_data = await db.question_chat_sessions.find_one({"session_id": session_id})
-        if not session_data:
-            raise HTTPException(status_code=404, detail="Session not found")
-        
-        session = QuestionSession(**session_data)
-        
-        return {
-            "session_id": session_id,
-            "scenario_name": session.scenario_name,
-            "difficulty": session.difficulty,
-            "progress": {
-                "current_question": session.current_question_index + 1,
-                "total_questions": session.total_questions,
-                "current_score": session.score,
-                "percentage": round((session.score / max(1, session.current_question_index)) * 100, 1),
-                "state": session.current_state,
-                "is_completed": session.is_completed
-            },
-            "attempts": session.question_attempts
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting progress: {str(e)}")
-
-@app.get("/api/question-sessions/{session_id}/conversation")
-async def get_question_session_conversation(
-    session_id: str,
-    db: MongoDB = Depends(get_db)
-):
-    """Get full conversation history for a question session"""
-    try:
-        session_data = await db.question_chat_sessions.find_one({"session_id": session_id})
-        if not session_data:
-            raise HTTPException(status_code=404, detail="Session not found")
-        
-        return {
-            "session_id": session_id,
-            "conversation_history": session_data["conversation_history"],
-            "question_attempts": session_data["question_attempts"]
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting conversation: {str(e)}")
-
-# ===== UTILITY & TESTING =====
-
-@app.post("/api/dev/setup-banking-scenario")
-async def setup_banking_scenario_quick(db: MongoDB = Depends(get_db)):
-    """Quick setup for testing - creates the banking scenario"""
-    try:
-        # Sample questions (you can replace with your full JSON)
-        sample_questions = [
-            {
-                "id": "basic_q1",
-                "question_number": 1,
-                "category": "Crisis Recognition",
-                "question_text": "What should be your first action when observing a customer argument?",
-                "options": [
-                    {"option_id": "A", "text": "Immediately intervene to understand the dispute"},
-                    {"option_id": "B", "text": "Call security to control the situation"},
-                    {"option_id": "C", "text": "Continue observing to assess the conflict"},
-                    {"option_id": "D", "text": "Signal staff to move customer to private area"}
-                ],
-                "correct_answer": "A",
-                "explanation": {
-                    "correct_explanation": "Immediate intervention demonstrates proactive leadership and prevents escalation",
-                    "incorrect_explanations": {
-                        "B": "Calling security may escalate unnecessarily",
-                        "C": "Continued observation allows situation to worsen",
-                        "D": "Gesturing shows lack of direct leadership"
-                    }
-                },
-                "competencies_tested": ["Crisis Management", "Leadership Presence"],
-                "scenario_context": "Initial response to conflict",
-                "source_difficulty": "easy"
-            }
-        ]
-        
-        scenario = QuestionScenarioDoc(
-            scenario_name="Banking Leadership Questions",
-            scenario_description="Leadership training for banking professionals",
-            scenario_context="You are a branch manager dealing with customer service conflicts. Your decisions impact customer satisfaction, staff morale, and bank reputation.",
-            questions=sample_questions,
-            competency_framework=["Crisis Management", "Leadership Presence", "Communication"]
-        )
-        
-        await db.question_scenarios.insert_one(scenario.dict())
-        
-        # Create bot config
-        bot_config = BotConfig(
-            bot_id=str(uuid.uuid4()),
-            bot_name="Banking Leadership Question Bot",
-            bot_description="Banking Leadership Questions",  # Must match scenario_name
-            bot_role="assistant",
-            bot_role_alt="user",
-            system_prompt="""You are an expert banking leadership trainer. You guide learners through leadership scenarios using questions and explanations. You validate their understanding and provide constructive feedback to build their leadership skills.""",
-            is_active=True,
-            bot_class="QuestionBot",
-            llm_model="gemini-2.0-flash"
-        )
-        
-        await db.create_bot(bot_config)
-        await bot_factory.initialize_bots()
-        
-        return {
-            "message": "Banking scenario setup complete",
-            "scenario_name": "Banking Leadership Questions",
-            "sample_usage": {
-                "start_session": "POST /llm/chat with message='start easy training' and scenario_name='Banking Leadership Questions'",
-                "continue_chat": "Use normal /llm/chat endpoint to continue conversation"
-            }
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error setting up scenario: {str(e)}")
-
 @app.get("/api/question-scenarios/{scenario_name}/questions")
 async def get_scenario_questions(
     scenario_name: str,
@@ -661,7 +450,7 @@ async def generate_all_paraphrases(
         
         generated_count = 0
         errors = []
-        print(bot)
+        
         for question in bot.scenario_questions:
             try:
                 # Check if exists
@@ -701,7 +490,178 @@ async def generate_all_paraphrases(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating paraphrases: {str(e)}")
 
-# ===== SESSION ANALYTICS =====
+@app.get("/api/questions/{scenario_name}/paraphrases")
+async def get_scenario_paraphrases(
+    scenario_name: str,
+    difficulty: str = "easy",
+    db: MongoDB = Depends(get_db)
+):
+    """Get all paraphrased questions for a scenario"""
+    try:
+        paraphrases = await db.paraphrased_questions.find({
+            "scenario_name": scenario_name,
+            "difficulty": difficulty,
+            "is_active": True
+        }).to_list(length=None)
+        
+        return {
+            "scenario_name": scenario_name,
+            "difficulty": difficulty,
+            "paraphrases": paraphrases
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting paraphrases: {str(e)}")
+
+# ===== CORE QUESTION SESSION APIS =====
+
+@app.post("/api/question-sessions/start")
+async def start_question_session(
+    scenario_name: str = Form(..., description="Scenario name to start"),
+    difficulty: str = Form(default="easy", description="easy or hard"),
+    user_id: Optional[str] = Form(default=None),
+    db: MongoDB = Depends(get_db)
+):
+    """Start a new question training session"""
+    try:
+        # Get the QuestionBot for this scenario
+        bot = await bot_factory.get_bot(scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Not a question bot scenario")
+        
+        # Start new session using the bot
+        result = await bot.start_new_session(difficulty)
+        
+        return {
+            "success": True,
+            "data": result
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error starting session: {str(e)}")
+
+@app.post("/api/question-sessions/{session_id}/answer")
+async def submit_question_answer(
+    session_id: str,
+    selected_option: str = Form(..., description="A, B, C, or D"),
+    time_taken: int = Form(default=30, description="Time taken in seconds"),
+    db: MongoDB = Depends(get_db)
+):
+    """Submit answer to current question"""
+    try:
+        # Get session to find the scenario
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get the appropriate bot
+        bot = await bot_factory.get_bot(session.scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Invalid bot type")
+        
+        # Submit answer through bot
+        result = await bot.submit_answer(session_id, selected_option, time_taken)
+        
+        return {
+            "success": True,
+            "data": result
+        }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error submitting answer: {str(e)}")
+
+@app.post("/api/question-sessions/{session_id}/explain")  
+async def submit_explanation(
+    session_id: str,
+    explanation: str = Form(..., description="User's explanation of their answer choice"),
+    db: MongoDB = Depends(get_db)
+):
+    """Submit and validate user's explanation"""
+    try:
+        # Get session to find the scenario
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+            
+        # Get the appropriate bot
+        bot = await bot_factory.get_bot(session.scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Invalid bot type")
+        
+        # Submit explanation through bot
+        result = await bot.submit_explanation(session_id, explanation)
+        
+        return {
+            "success": True,
+            "data": result
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing explanation: {str(e)}")
+
+@app.get("/api/question-sessions/{session_id}/results")
+async def get_session_final_results(
+    session_id: str,
+    db: MongoDB = Depends(get_db)
+):
+    """Get final results and analysis for completed session"""
+    try:
+        # Get session to find the scenario
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get the appropriate bot
+        bot = await bot_factory.get_bot(session.scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Invalid bot type")
+        
+        # Get results through bot
+        result = await bot.get_session_results(session_id)
+        
+        return {
+            "success": True,
+            "data": result
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting results: {str(e)}")
+
+@app.get("/api/question-sessions/{session_id}/status")
+async def get_session_status(
+    session_id: str,
+    db: MongoDB = Depends(get_db)
+):
+    """Get current session status and progress"""
+    try:
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        current_question = None
+        if (session.current_question_index < len(session.paraphrased_questions_used) and 
+            not session.is_completed):
+            current_question = session.paraphrased_questions_used[session.current_question_index]
+        
+        return {
+            "success": True,
+            "data": {
+                "session_id": session_id,
+                "current_question": current_question,
+                "question_number": session.current_question_index + 1,
+                "total_questions": session.total_questions,
+                "current_score": session.score,
+                "state": session.current_state,
+                "is_completed": session.is_completed,
+                "difficulty": session.difficulty,
+                "scenario_name": session.scenario_name
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting status: {str(e)}")
+
+# ===== ANALYTICS =====
 
 @app.get("/api/analytics/question-sessions/summary")
 async def get_question_sessions_summary(
@@ -758,587 +718,28 @@ async def get_question_sessions_summary(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting analytics: {str(e)}")
 
-# ===== TESTING & DEVELOPMENT =====
+# ===== BOT MANAGEMENT (Minimal) =====
 
-@app.post("/api/dev/test-question-flow")
-async def test_question_flow(
-    scenario_name: str = Form(default="Banking Leadership Questions"),
-    difficulty: str = Form(default="easy"),
-    db: MongoDB = Depends(get_db)
-):
-    """Test the complete question flow"""
+@app.get("/api/available-scenarios")
+async def get_available_scenarios():
+    """Get list of available question scenarios"""
     try:
-        # Simulate conversation flow
-        test_messages = [
-            Message(role="user", content=f"start {difficulty} training"),
-            Message(role="assistant", content="Starting session...")
-        ]
-        
-        bot = await bot_factory.get_bot(scenario_name)
-        response = await bot.get_farmer_response(f"start {difficulty} training", scenario_name, test_messages)
-        
+        bots = list(bot_factory.bots.keys())
         return {
-            "test_status": "success",
-            "scenario_name": scenario_name,
-            "difficulty": difficulty,
-            "first_question_response": response,
-            "next_steps": "Send 'A' or 'B' or 'C' or 'D' as next message to test answer flow"
+            "available_scenarios": bots,
+            "total_count": len(bots)
         }
-        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error testing flow: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting scenarios: {str(e)}")
 
-# ===== DATABASE EXTENSIONS =====
-
-# Missing Question Session APIs - Add these to your FastAPI application
-
-# @app.post("/api/question-sessions/start")
-# async def start_question_session(
-#     scenario_id: str = Form(..., description="Scenario name to start"),
-#     difficulty: str = Form(default="easy", description="easy or hard"),
-#     user_id: Optional[str] = Form(default=None),
-#     db: MongoDB = Depends(get_db)
-# ):
-#     """Start a new question training session"""
-#     try:
-#         # Create new session
-#         session = QuestionSession(
-#             scenario_name=scenario_id,
-#             difficulty=difficulty,
-#             user_id=user_id,
-#             current_state="awaiting_answer"
-#         )
-        
-#         # Load questions for this scenario
-#         questions = await db.get_scenario_questions(scenario_id)
-#         if not questions:
-#             raise HTTPException(status_code=404, detail="No questions found for scenario")
-            
-#         session.questions_data = questions
-#         session.total_questions = len(questions)
-        
-#         # Save session
-#         await db.save_question_session(session)
-        
-#         # Get first question (paraphrased)
-#         if len(questions) > 0:
-#             bot = await bot_factory.get_bot(scenario_id)
-#             if hasattr(bot, '_get_paraphrased_question'):
-#                 first_question = await bot._get_paraphrased_question(questions[0], difficulty)
-#             else:
-#                 first_question = questions[0]
-#         else:
-#             first_question = None
-        
-#         return {
-#             "session_id": session.session_id,
-#             "scenario_name": session.scenario_name,
-#             "difficulty": session.difficulty,
-#             "total_questions": session.total_questions,
-#             "current_question": first_question
-#         }
-        
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error starting session: {str(e)}")
-@app.post("/api/question-sessions/start")
-async def start_question_session(
-    scenario_id: str = Form(..., description="Scenario name to start"),
-    difficulty: str = Form(default="easy", description="easy or hard"),
-    user_id: Optional[str] = Form(default=None),
-    db: MongoDB = Depends(get_db)
-):
-    """Start a new question training session"""
+@app.post("/api/refresh-bots")
+async def refresh_question_bots():
+    """Refresh bot factory - reload all question bots"""
     try:
-        # Get the QuestionBot for this scenario
-        bot = await bot_factory.get_bot(scenario_id)
-        if not isinstance(bot, QuestionBot):
-            raise HTTPException(status_code=400, detail="Not a question bot scenario")
-        
-        # Create new session using the bot
-        session_id = str(uuid.uuid4())
-        session = await bot._get_or_create_session(session_id, difficulty)
-        
-        # Get first question
-        if len(session.paraphrased_questions_used) > 0:
-            first_question = session.paraphrased_questions_used[0]
-        else:
-            raise HTTPException(status_code=500, detail="No questions available")
-        
+        await bot_factory.initialize_bots()
         return {
-            "session_id": session.session_id,
-            "scenario_name": session.scenario_name,
-            "difficulty": session.difficulty,
-            "total_questions": session.total_questions,
-            "current_question": first_question
+            "message": "Question bots refreshed successfully",
+            "loaded_scenarios": list(bot_factory.bots.keys())
         }
-        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error starting session: {str(e)}")
-# @app.post("/api/question-sessions/{session_id}/answer")
-# async def submit_question_answer(
-#     session_id: str,
-#     selected_option: str = Form(..., description="A, B, C, or D"),
-#     time_taken: int = Form(default=30, description="Time taken in seconds"),
-#     db: MongoDB = Depends(get_db)
-# ):
-#     """Submit answer to current question"""
-#     try:
-#         # Get session
-#         session = await db.get_question_session(session_id)
-#         if not session:
-#             raise HTTPException(status_code=404, detail="Session not found")
-            
-#         if session.current_question_index >= len(session.questions_data):
-#             raise HTTPException(status_code=400, detail="No more questions available")
-            
-#         current_q = session.questions_data[session.current_question_index]
-#         is_correct = selected_option.upper() == current_q['correct_answer'].upper()
-        
-#         # Create attempt record
-#         attempt = {
-#             "question_id": current_q['id'],
-#             "user_answer": selected_option.upper(),
-#             "is_correct": is_correct,
-#             "time_taken": time_taken,
-#             "timestamp": datetime.now()
-#         }
-        
-#         session.question_attempts.append(attempt)
-        
-#         if is_correct:
-#             # Ask for explanation
-#             session.current_state = "awaiting_explanation"
-#             await db.save_question_session(session)
-            
-#             return {
-#                 "is_correct": True,
-#                 "feedback": f"Correct! You selected {selected_option.upper()}. Now please explain why this is the best choice.",
-#                 "current_score": session.score,
-#                 "total_questions": session.total_questions,
-#                 "is_completed": False,
-#                 "next_question_available": False,
-#                 "awaiting_explanation": True
-#             }
-#         else:
-#             # Move to next question
-#             session.score += 0  # No points for incorrect
-#             session.current_question_index += 1
-            
-#             # Check if completed
-#             next_question = None
-#             is_completed = session.current_question_index >= len(session.questions_data)
-            
-#             if not is_completed:
-#                 # Get next paraphrased question
-#                 bot = await bot_factory.get_bot(session.scenario_name)
-#                 if hasattr(bot, '_get_paraphrased_question'):
-#                     next_question = await bot._get_paraphrased_question(
-#                         session.questions_data[session.current_question_index], 
-#                         session.difficulty
-#                     )
-#                 else:
-#                     next_question = session.questions_data[session.current_question_index]
-#             else:
-#                 session.is_completed = True
-#                 session.current_state = "completed"
-            
-#             await db.save_question_session(session)
-            
-#             return {
-#                 "is_correct": False,
-#                 "correct_answer": current_q['correct_answer'],
-#                 "explanation": current_q.get('explanation', {}),
-#                 "feedback": f"The correct answer is {current_q['correct_answer']}. {current_q.get('explanation', {}).get('correct_explanation', '')}",
-#                 "current_score": session.score,
-#                 "total_questions": session.total_questions,
-#                 "is_completed": is_completed,
-#                 "next_question_available": not is_completed,
-#                 "next_question": next_question
-#             }
-            
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error submitting answer: {str(e)}")
-@app.post("/api/question-sessions/{session_id}/answer")
-async def submit_question_answer(
-    session_id: str,
-    selected_option: str = Form(..., description="A, B, C, or D"),
-    time_taken: int = Form(default=30, description="Time taken in seconds"),
-    db: MongoDB = Depends(get_db)
-):
-    """Submit answer to current question"""
-    try:
-        # Get session
-        session = await db.get_question_session(session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-            
-        if session.current_question_index >= len(session.questions_data):
-            raise HTTPException(status_code=400, detail="No more questions available")
-        
-        # Get the bot to process the answer
-        bot = await bot_factory.get_bot(session.scenario_name)
-        if not isinstance(bot, QuestionBot):
-            raise HTTPException(status_code=400, detail="Invalid bot type")
-        
-        # Simulate conversation for the bot's answer processing
-        fake_conversation = [
-            Message(role="user", content=selected_option, timestamp=datetime.now())
-        ]
-        
-        # Process through the bot
-        response = await bot._handle_answer_submission(selected_option, fake_conversation)
-        
-        # Update session in database
-        updated_session = await db.get_question_session(session_id)
-        
-        # Parse the response to determine next action
-        is_correct = "Correct!" in response
-        is_awaiting_explanation = updated_session.current_state == "awaiting_explanation"
-        is_completed = updated_session.is_completed
-        
-        # Get next question if available and not awaiting explanation
-        next_question = None
-        if (not is_awaiting_explanation and not is_completed and 
-            updated_session.current_question_index < len(updated_session.paraphrased_questions_used)):
-            next_question = updated_session.paraphrased_questions_used[updated_session.current_question_index]
-        
-        return {
-            "is_correct": is_correct,
-            "feedback": response.replace("$encouraging$", "").replace("$educational$", "").replace("$neutral$", ""),
-            "current_score": updated_session.score,
-            "total_questions": updated_session.total_questions,
-            "is_completed": is_completed,
-            "next_question_available": not is_awaiting_explanation and not is_completed,
-            "awaiting_explanation": is_awaiting_explanation,
-            "next_question": next_question
-        }
-            
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error submitting answer: {str(e)}")
-# @app.post("/api/question-sessions/{session_id}/explain")  
-# async def submit_explanation(
-#     session_id: str,
-#     explanation: str = Form(..., description="User's explanation of their answer choice"),
-#     db: MongoDB = Depends(get_db)
-# ):
-#     """Submit and validate user's explanation"""
-#     try:
-#         # Get session
-#         session = await db.get_question_session(session_id)
-#         if not session:
-#             raise HTTPException(status_code=404, detail="Session not found")
-            
-#         if session.current_state != "awaiting_explanation":
-#             raise HTTPException(status_code=400, detail="Not expecting explanation at this time")
-            
-#         current_q = session.questions_data[session.current_question_index]
-        
-#         # Validate explanation with LLM
-#         bot = await bot_factory.get_bot(session.scenario_name)
-#         if hasattr(bot, '_validate_explanation_with_llm'):
-#             validation_result = await bot._validate_explanation_with_llm(current_q, explanation)
-#         else:
-#             # Fallback validation
-#             validation_result = {
-#                 "is_valid": True,
-#                 "feedback": "Thank you for your explanation. Let's continue.",
-#                 "key_points_covered": [],
-#                 "missing_critical_points": []
-#             }
-        
-#         # Update the last attempt with explanation
-#         if session.question_attempts:
-#             last_attempt = session.question_attempts[-1]
-#             last_attempt["user_explanation"] = explanation
-#             last_attempt["explanation_validation"] = validation_result
-        
-#         # Award point for correct answer + explanation
-#         session.score += 1
-#         session.current_question_index += 1
-        
-#         # Check if completed
-#         next_question = None
-#         is_completed = session.current_question_index >= len(session.questions_data)
-        
-#         if not is_completed:
-#             # Get next paraphrased question
-#             if hasattr(bot, '_get_paraphrased_question'):
-#                 next_question = await bot._get_paraphrased_question(
-#                     session.questions_data[session.current_question_index], 
-#                     session.difficulty
-#                 )
-#             else:
-#                 next_question = session.questions_data[session.current_question_index]
-            
-#             session.current_state = "awaiting_answer"
-#         else:
-#             session.is_completed = True
-#             session.current_state = "completed"
-        
-#         await db.save_question_session(session)
-        
-#         return {
-#             "explanation_valid": validation_result.get("is_valid", True),
-#             "feedback": validation_result.get("feedback", "Good explanation!"),
-#             "key_points_covered": validation_result.get("key_points_covered", []),
-#             "missing_points": validation_result.get("missing_critical_points", []),
-#             "current_score": session.score,
-#             "total_questions": session.total_questions,
-#             "is_completed": is_completed,
-#             "next_question_available": not is_completed,
-#             "next_question": next_question
-#         }
-        
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error processing explanation: {str(e)}")
-@app.post("/api/question-sessions/{session_id}/explain")  
-async def submit_explanation(
-    session_id: str,
-    explanation: str = Form(..., description="User's explanation of their answer choice"),
-    db: MongoDB = Depends(get_db)
-):
-    """Submit and validate user's explanation"""
-    try:
-        # Get session
-        session = await db.get_question_session(session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-            
-        if session.current_state != "awaiting_explanation":
-            raise HTTPException(status_code=400, detail="Not expecting explanation at this time")
-        
-        # Get the bot to process the explanation
-        bot = await bot_factory.get_bot(session.scenario_name)
-        if not isinstance(bot, QuestionBot):
-            raise HTTPException(status_code=400, detail="Invalid bot type")
-        
-        # Simulate conversation for the bot's explanation processing
-        fake_conversation = [
-            Message(role="user", content=explanation, timestamp=datetime.now())
-        ]
-        
-        # Process through the bot
-        response = await bot._handle_explanation_submission(explanation, fake_conversation)
-        
-        # Get updated session
-        updated_session = await db.get_question_session(session_id)
-        
-        # Get validation result from the last attempt
-        validation_result = {}
-        if updated_session.question_attempts:
-            last_attempt = updated_session.question_attempts[-1]
-            if hasattr(last_attempt, 'explanation_validation') and last_attempt.explanation_validation:
-                validation_result = last_attempt.explanation_validation
-        
-        # Check if there's a next question
-        next_question = None
-        is_completed = updated_session.is_completed
-        if (not is_completed and 
-            updated_session.current_question_index < len(updated_session.paraphrased_questions_used)):
-            next_question = updated_session.paraphrased_questions_used[updated_session.current_question_index]
-        
-        return {
-            "explanation_valid": validation_result.get("is_valid", True),
-            "feedback": response.replace("$proud$", "").replace("$educational$", "").replace("$neutral$", ""),
-            "key_points_covered": validation_result.get("key_points_covered", []),
-            "missing_points": validation_result.get("missing_critical_points", []),
-            "current_score": updated_session.score,
-            "total_questions": updated_session.total_questions,
-            "is_completed": is_completed,
-            "next_question_available": not is_completed,
-            "next_question": next_question
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing explanation: {str(e)}")
-
-# @app.get("/api/question-sessions/{session_id}/current")
-# async def get_current_question_state(
-#     session_id: str,
-#     db: MongoDB = Depends(get_db)
-# ):
-#     """Get current question and session state"""
-#     try:
-#         session = await db.get_question_session(session_id)
-#         if not session:
-#             raise HTTPException(status_code=404, detail="Session not found")
-        
-#         current_question = None
-#         if (session.current_question_index < len(session.questions_data) and 
-#             not session.is_completed):
-            
-#             current_q = session.questions_data[session.current_question_index]
-            
-#             # Get paraphrased version
-#             bot = await bot_factory.get_bot(session.scenario_name)
-#             if hasattr(bot, '_get_paraphrased_question'):
-#                 current_question = await bot._get_paraphrased_question(current_q, session.difficulty)
-#             else:
-#                 current_question = current_q
-        
-#         return {
-#             "session_id": session_id,
-#             "current_question": current_question,
-#             "question_number": session.current_question_index + 1,
-#             "total_questions": session.total_questions,
-#             "current_score": session.score,
-#             "state": session.current_state,
-#             "is_completed": session.is_completed,
-#             "difficulty": session.difficulty
-#         }
-        
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error getting current state: {str(e)}")
-@app.get("/api/question-sessions/{session_id}/current")
-async def get_current_question_state(
-    session_id: str,
-    db: MongoDB = Depends(get_db)
-):
-    """Get current question and session state"""
-    try:
-        session = await db.get_question_session(session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-        
-        current_question = None
-        if (session.current_question_index < len(session.paraphrased_questions_used) and 
-            not session.is_completed):
-            current_question = session.paraphrased_questions_used[session.current_question_index]
-        
-        return {
-            "session_id": session_id,
-            "current_question": current_question,
-            "question_number": session.current_question_index + 1,
-            "total_questions": session.total_questions,
-            "current_score": session.score,
-            "state": session.current_state,
-            "is_completed": session.is_completed,
-            "difficulty": session.difficulty
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting current state: {str(e)}")
-# @app.get("/api/question-sessions/{session_id}/results")
-# async def get_session_final_results(
-#     session_id: str,
-#     db: MongoDB = Depends(get_db)
-# ):
-#     """Get final results and analysis for completed session"""
-#     try:
-#         session = await db.get_question_session(session_id)
-#         if not session:
-#             raise HTTPException(status_code=404, detail="Session not found")
-            
-#         if not session.is_completed:
-#             raise HTTPException(status_code=400, detail="Session not yet completed")
-        
-#         # Calculate results
-#         total_questions = session.total_questions
-#         final_score = session.score
-#         percentage = (final_score / total_questions * 100) if total_questions > 0 else 0
-        
-#         # Calculate competency performance
-#         competency_scores = {}
-#         for attempt in session.question_attempts:
-#             question_id = attempt.get("question_id")
-#             question = next((q for q in session.questions_data if q["id"] == question_id), None)
-#             if question and attempt.get("is_correct"):
-#                 competencies = question.get("competencies_tested", [])
-#                 for comp in competencies:
-#                     if comp not in competency_scores:
-#                         competency_scores[comp] = {"correct": 0, "total": 0}
-#                     competency_scores[comp]["correct"] += 1
-#                     competency_scores[comp]["total"] += 1
-#             elif question:
-#                 competencies = question.get("competencies_tested", [])
-#                 for comp in competencies:
-#                     if comp not in competency_scores:
-#                         competency_scores[comp] = {"correct": 0, "total": 0}
-#                     competency_scores[comp]["total"] += 1
-        
-#         # Convert to percentages
-#         competency_percentages = {
-#             comp: (scores["correct"] / scores["total"] * 100) if scores["total"] > 0 else 0
-#             for comp, scores in competency_scores.items()
-#         }
-        
-#         return {
-#             "session_id": session_id,
-#             "scenario_name": session.scenario_name,
-#             "difficulty": session.difficulty,
-#             "final_score": final_score,
-#             "total_questions": total_questions,
-#             "percentage_score": round(percentage, 1),
-#             "passed": percentage >= 70,
-#             "excellence": percentage >= 85,
-#             "competency_scores": competency_percentages,
-#             "detailed_attempts": session.question_attempts,
-#             "session_duration": (session.last_updated - session.created_at).total_seconds() / 60,  # minutes
-#             "created_at": session.created_at,
-#             "completed_at": session.last_updated
-#         }
-        
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error getting results: {str(e)}")
-@app.get("/api/question-sessions/{session_id}/results")
-async def get_session_final_results(
-    session_id: str,
-    db: MongoDB = Depends(get_db)
-):
-    """Get final results and analysis for completed session"""
-    try:
-        session = await db.get_question_session(session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-            
-        if not session.is_completed:
-            raise HTTPException(status_code=400, detail="Session not yet completed")
-        
-        # Calculate results
-        total_questions = session.total_questions
-        final_score = session.score
-        percentage = (final_score / total_questions * 100) if total_questions > 0 else 0
-        
-        # Calculate competency performance from attempts
-        competency_scores = {}
-        for attempt in session.question_attempts:
-            if hasattr(attempt, 'original_question'):
-                question = attempt.original_question
-            else:
-                question = attempt.get('original_question', {})
-                
-            competencies = question.get("competencies_tested", [])
-            is_correct = attempt.get('is_correct', False) if isinstance(attempt, dict) else attempt.is_correct
-            
-            for comp in competencies:
-                if comp not in competency_scores:
-                    competency_scores[comp] = {"correct": 0, "total": 0}
-                competency_scores[comp]["total"] += 1
-                if is_correct:
-                    competency_scores[comp]["correct"] += 1
-        
-        # Convert to percentages
-        competency_percentages = {
-            comp: (scores["correct"] / scores["total"] * 100) if scores["total"] > 0 else 0
-            for comp, scores in competency_scores.items()
-        }
-        
-        return {
-            "session_id": session_id,
-            "scenario_name": session.scenario_name,
-            "difficulty": session.difficulty,
-            "final_score": final_score,
-            "total_questions": total_questions,
-            "percentage_score": round(percentage, 1),
-            "passed": percentage >= 70,
-            "excellence": percentage >= 85,
-            "competency_scores": competency_percentages,
-            "detailed_attempts": session.question_attempts,
-            "conversation_history": session.conversation_history,
-            "session_duration": (session.last_updated - session.created_at).total_seconds() / 60,  # minutes
-            "created_at": session.created_at,
-            "completed_at": session.last_updated
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting results: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error refreshing bots: {str(e)}")
