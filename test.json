@@ -1,0 +1,1096 @@
+{
+  "training_scenarios": {
+    "scenario_metadata": {
+      "title": "AR/VR Training Scenario for Leadership Development: Miscommunication Regarding Service Charges",
+      "scenario_name": "The Confused Demand Draft Customer",
+      "industry": "Banking & Financial Services",
+      "learning_objectives": [
+        "Conflict Resolution",
+        "Communication Under Pressure", 
+        "Team Management",
+        "Process Improvement",
+        "Customer Relationship Management",
+        "Crisis Leadership",
+        "Stakeholder Management"
+      ],
+      "target_audience": "Branch Managers, Senior Banking Professionals",
+      "estimated_duration_minutes": 45,
+      "scenario_description": "It's a busy Monday morning at the bank. Mr. Suresh, a regular customer, approaches the counter to collect a demand draft he had requested two days ago. When he receives the draft, the officer on duty, Ms. Kavita, informs him of the applicable service charges. Mr. Suresh becomes visibly upset and claims that he was informed earlier that no charges would apply for the draft. The argument becomes heated, attracting the attention of other customers and staff. As the Branch Manager, you observe the situation and must intervene to resolve the conflict."
+    },
+    "question_sets": {
+      "basic_level": {
+        "difficulty": "Basic/Intermediate",
+        "target_experience": "New to Mid-level Managers",
+        "questions": [
+          {
+            "id": "basic_q1",
+            "question_number": 1,
+            "category": "Crisis Recognition and Response",
+            "question_text": "As you witness the heated exchange between Mr. Suresh and Ms. Kavita, what should be your first course of action?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Immediately intervene by approaching the counter to understand the dispute"
+              },
+              {
+                "option_id": "B", 
+                "text": "Contact the security personnel to control the situation first"
+              },
+              {
+                "option_id": "C",
+                "text": "Continue observing briefly to assess the full scope of the conflict"
+              },
+              {
+                "option_id": "D",
+                "text": "Instruct Ms. Kavita through gestures to move the customer to a private area"
+              }
+            ],
+            "correct_answer": "A",
+            "explanation_correct": "Immediately intervening demonstrates proactive leadership and prevents escalation. As a branch manager, taking direct action shows authority and helps de-escalate the situation before it worsens.",
+            "explanations_incorrect": {
+              "B": "Calling security first may escalate the situation unnecessarily and could make the customer feel threatened, potentially damaging the bank's reputation.",
+              "C": "Continued observation allows the situation to escalate further, potentially causing more disruption and customer dissatisfaction.",
+              "D": "Gesturing from a distance shows lack of direct leadership and may not effectively resolve the immediate conflict."
+            },
+            "competencies_tested": ["Crisis Management", "Leadership Presence", "Decision Making"],
+            "scenario_context": "Initial response to conflict",
+            "difficulty_rating": 2
+          },
+          {
+            "id": "basic_q2",
+            "question_number": 2,
+            "category": "Positioning and Body Language",
+            "question_text": "When entering the conflict zone, how should you position yourself to demonstrate effective leadership?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Stand directly behind Ms. Kavita to demonstrate staff solidarity"
+              },
+              {
+                "option_id": "B",
+                "text": "Place yourself in a neutral position where you can address both parties equally"
+              },
+              {
+                "option_id": "C",
+                "text": "Move closer to Mr. Suresh's side to emphasize customer priority"
+              },
+              {
+                "option_id": "D",
+                "text": "Maintain distance and invite both individuals to your private office"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "Positioning yourself neutrally demonstrates impartiality and fairness. This approach helps both parties feel heard and shows professional mediation skills essential for conflict resolution.",
+            "explanations_incorrect": {
+              "A": "Standing behind staff may appear biased and could make the customer feel ganged up on, potentially escalating the conflict.",
+              "C": "Positioning closer to the customer might undermine staff confidence and appear to take sides before understanding the situation.",
+              "D": "Maintaining distance shows lack of engagement and may not address the immediate public nature of the conflict."
+            },
+            "competencies_tested": ["Conflict Mediation", "Non-verbal Communication", "Impartiality"],
+            "scenario_context": "Physical positioning during intervention",
+            "difficulty_rating": 2
+          },
+          {
+            "id": "basic_q3",
+            "question_number": 3,
+            "category": "Initial Dialogue and Tone Setting",
+            "question_text": "Which opening statement best demonstrates professional conflict resolution skills?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Mr. Suresh, I need you to lower your voice so we can resolve this matter."
+              },
+              {
+                "option_id": "B",
+                "text": "I am the Branch Manager here. Can someone tell me what's happening?"
+              },
+              {
+                "option_id": "C",
+                "text": "Good morning, Mr. Suresh. I notice there's some confusion. How may I assist in resolving this?"
+              },
+              {
+                "option_id": "D",
+                "text": "Ms. Kavita, please walk me through exactly what transpired with Mr. Suresh."
+              }
+            ],
+            "correct_answer": "C",
+            "explanation_correct": "This approach is polite, acknowledges the customer by name, frames the situation neutrally as 'confusion' rather than blame, and offers assistance. It demonstrates empathy and professionalism.",
+            "explanations_incorrect": {
+              "A": "Commanding the customer to lower their voice can be perceived as controlling and may escalate emotions rather than calm the situation.",
+              "B": "While establishing authority, this approach is impersonal and doesn't acknowledge the specific individuals or show empathy for the situation.",
+              "D": "Starting with staff input first may make the customer feel ignored or that you're taking sides before hearing their perspective."
+            },
+            "competencies_tested": ["Professional Communication", "Empathy", "Tone Management"],
+            "scenario_context": "Opening communication approach",
+            "difficulty_rating": 2
+          },
+          {
+            "id": "basic_q4",
+            "question_number": 4,
+            "category": "Fact-Finding Methodology",
+            "question_text": "What's the most effective sequence for collecting accurate information about the dispute?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Allow Mr. Suresh to present his account first, followed by Ms. Kavita's perspective"
+              },
+              {
+                "option_id": "B",
+                "text": "Immediately access the computer system to review transaction details"
+              },
+              {
+                "option_id": "C",
+                "text": "Request both parties to provide written statements for accuracy"
+              },
+              {
+                "option_id": "D",
+                "text": "Encourage both individuals to explain simultaneously for efficiency"
+              }
+            ],
+            "correct_answer": "A",
+            "explanation_correct": "Listening to the customer first shows respect for their concerns and helps de-escalate emotions. Following with staff perspective ensures both viewpoints are heard systematically and fairly.",
+            "explanations_incorrect": {
+              "B": "Checking systems first ignores the human element and may make both parties feel dismissed before their concerns are heard.",
+              "C": "Written statements take time and may not address the immediate emotional state of the conflict that needs resolution.",
+              "D": "Simultaneous explanations create confusion and may lead to arguments between the parties rather than clear understanding."
+            },
+            "competencies_tested": ["Active Listening", "Information Gathering", "Systematic Approach"],
+            "scenario_context": "Information collection process",
+            "difficulty_rating": 2
+          },
+          {
+            "id": "basic_q5",
+            "question_number": 5,
+            "category": "Record Analysis Priority",
+            "question_text": "While examining the demand draft paperwork, which element requires your immediate attention?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Verification of signatures and security features on the documents"
+              },
+              {
+                "option_id": "B",
+                "text": "Evidence of charge disclosure and customer acknowledgment procedures"
+              },
+              {
+                "option_id": "C",
+                "text": "Confirmation of the draft amount and processing timeline"
+              },
+              {
+                "option_id": "D",
+                "text": "Staff identification codes and transaction audit trail"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "The core of the dispute is about charge communication. Checking how charges were disclosed and acknowledged directly addresses the root cause of the conflict and helps determine appropriate resolution.",
+            "explanations_incorrect": {
+              "A": "While important for security, signature verification doesn't address the specific dispute about charge communication.",
+              "C": "Amount and timeline verification, while necessary, doesn't resolve the central issue of charge disclosure.",
+              "D": "Audit trails are important for compliance but don't directly help resolve the customer's immediate concern about charge communication."
+            },
+            "competencies_tested": ["Root Cause Analysis", "Documentation Review", "Priority Assessment"],
+            "scenario_context": "Document examination focus",
+            "difficulty_rating": 2
+          },
+          {
+            "id": "basic_q6",
+            "question_number": 6,
+            "category": "Accountability and Problem Resolution",
+            "question_text": "Upon discovering that service charges were mentioned but inadequately emphasized, how should you proceed?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Acknowledge that the bank's communication process needs improvement and express regret to Mr. Suresh"
+              },
+              {
+                "option_id": "B",
+                "text": "Point out that charges were technically disclosed, fulfilling the bank's procedural requirements"
+              },
+              {
+                "option_id": "C",
+                "text": "Attribute the confusion to the weekend staff who initially processed the application"
+              },
+              {
+                "option_id": "D",
+                "text": "Indicate that Mr. Suresh bears responsibility for not reviewing the terms thoroughly"
+              }
+            ],
+            "correct_answer": "A",
+            "explanation_correct": "Taking responsibility and acknowledging process improvements needed demonstrates leadership accountability and customer focus. This approach builds trust and shows commitment to better service.",
+            "explanations_incorrect": {
+              "B": "While technically correct, this defensive approach doesn't address the customer's experience and may escalate frustration.",
+              "C": "Blaming other staff undermines team unity and doesn't take managerial responsibility for overall processes.",
+              "D": "Blaming the customer damages the relationship and doesn't acknowledge the bank's role in clear communication."
+            },
+            "competencies_tested": ["Accountability", "Customer Service Recovery", "Leadership Responsibility"],
+            "scenario_context": "Problem acknowledgment and resolution",
+            "difficulty_rating": 2
+          },
+          {
+            "id": "basic_q7",
+            "question_number": 7,
+            "category": "Staff Support During Crisis",
+            "question_text": "When Ms. Kavita quietly insists 'But sir, I did explain the charges properly,' your best response is:",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "I acknowledge your perspective, but our focus now must be on resolution."
+              },
+              {
+                "option_id": "B",
+                "text": "I believe you, however, we must prioritize customer satisfaction in this instance."
+              },
+              {
+                "option_id": "C",
+                "text": "Please step away and assist other customers while I handle this situation."
+              },
+              {
+                "option_id": "D",
+                "text": "We'll review your handling of this matter privately once this is resolved."
+              }
+            ],
+            "correct_answer": "A",
+            "explanation_correct": "This response validates the staff member's input while maintaining focus on resolution. It shows respect for staff while demonstrating leadership priority on solving the immediate issue.",
+            "explanations_incorrect": {
+              "B": "While supportive, this may create impression that customer is always right regardless of facts, which can demoralize staff.",
+              "C": "Dismissing the staff member during the conflict can damage confidence and doesn't utilize their knowledge of the situation.",
+              "D": "This response may create anxiety about future consequences and doesn't address the immediate need for collaborative resolution."
+            },
+            "competencies_tested": ["Staff Support", "Crisis Communication", "Focus Management"],
+            "scenario_context": "Managing staff input during resolution",
+            "difficulty_rating": 3
+          },
+          {
+            "id": "basic_q8",
+            "question_number": 8,
+            "category": "Solution Implementation",
+            "question_text": "Which resolution approach best balances customer satisfaction with institutional integrity?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Completely eliminate the charges as a gesture of goodwill"
+              },
+              {
+                "option_id": "B",
+                "text": "Reduce the charges by half while explaining standard banking policies"
+              },
+              {
+                "option_id": "C",
+                "text": "Eliminate charges for this transaction while clarifying future policy application"
+              },
+              {
+                "option_id": "D",
+                "text": "Uphold the current charges while providing future service benefits"
+              }
+            ],
+            "correct_answer": "C",
+            "explanation_correct": "This approach resolves the immediate issue by waiving charges due to communication gap, while educating the customer about future policies. It balances customer satisfaction with institutional learning.",
+            "explanations_incorrect": {
+              "A": "Complete waiver without explanation may set unrealistic expectations for future transactions and doesn't address the communication issue.",
+              "B": "Partial charges may still leave the customer dissatisfied and doesn't fully acknowledge the communication breakdown.",
+              "D": "Maintaining charges when communication was inadequate doesn't address the root cause and may damage the relationship."
+            },
+            "competencies_tested": ["Solution Design", "Policy Balance", "Customer Recovery"],
+            "scenario_context": "Resolution strategy implementation",
+            "difficulty_rating": 3
+          },
+          {
+            "id": "basic_q9",
+            "question_number": 9,
+            "category": "Managing Bystander Impact",
+            "question_text": "How should you minimize the negative impact on other customers who observed the conflict?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Address the entire branch with a public apology for the disruption"
+              },
+              {
+                "option_id": "B",
+                "text": "Direct staff members to quietly reassure individual nearby customers"
+              },
+              {
+                "option_id": "C",
+                "text": "Resume normal banking operations without special acknowledgment"
+              },
+              {
+                "option_id": "D",
+                "text": "Provide a general statement about the bank's commitment to customer service"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "Discrete individual reassurance maintains professionalism while addressing concerns without drawing more attention to the incident. This personalized approach helps restore confidence.",
+            "explanations_incorrect": {
+              "A": "Public announcements may draw more attention to the incident and could embarrass the original customer further.",
+              "C": "Ignoring other customers' concerns about what they witnessed may leave negative impressions unaddressed.",
+              "D": "General statements may seem impersonal and don't address individual customers' specific concerns about what they observed."
+            },
+            "competencies_tested": ["Crowd Management", "Reputation Protection", "Discrete Communication"],
+            "scenario_context": "Managing witness customer impact",
+            "difficulty_rating": 3
+          },
+          {
+            "id": "basic_q10",
+            "question_number": 10,
+            "category": "Systematic Improvement Implementation",
+            "question_text": "Which preventive measure would most effectively avoid similar miscommunications in the future?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Implement mandatory separate signature forms specifically for service charge acknowledgment"
+              },
+              {
+                "option_id": "B",
+                "text": "Install prominent service charge display boards at every customer service point"
+              },
+              {
+                "option_id": "C",
+                "text": "Establish verbal confirmation protocols where staff must receive explicit customer agreement on all charges"
+              },
+              {
+                "option_id": "D",
+                "text": "Deploy automated SMS alerts for all service charges to customer mobile numbers"
+              }
+            ],
+            "correct_answer": "C",
+            "explanation_correct": "Verbal confirmation with explicit agreement ensures direct communication and customer understanding. This interactive approach addresses the core issue of miscommunication most effectively.",
+            "explanations_incorrect": {
+              "A": "Additional paperwork may slow processes and doesn't guarantee better communication or understanding.",
+              "B": "Display boards provide information but don't ensure individual customer awareness or understanding.",
+              "D": "SMS alerts are helpful but may be missed or ignored, and don't ensure interactive confirmation of understanding."
+            },
+            "competencies_tested": ["Process Improvement", "Communication Enhancement", "Prevention Strategy"],
+            "scenario_context": "Future prevention planning",
+            "difficulty_rating": 3
+          },
+          {
+            "id": "basic_q11",
+            "question_number": 11,
+            "category": "Employee Development Approach",
+            "question_text": "What's the most constructive way to address this situation with Ms. Kavita in follow-up discussions?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Conduct a formal disciplinary review regarding customer service protocol violations"
+              },
+              {
+                "option_id": "B",
+                "text": "Schedule a developmental conversation emphasizing clear communication techniques"
+              },
+              {
+                "option_id": "C",
+                "text": "Avoid addressing the incident since customer expectations were also unreasonable"
+              },
+              {
+                "option_id": "D",
+                "text": "Enroll her in comprehensive conflict management and de-escalation training"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "A developmental approach focuses on improvement rather than punishment. This builds skills and confidence while addressing the communication aspects that led to the misunderstanding.",
+            "explanations_incorrect": {
+              "A": "Formal discipline may be excessive when the issue was partly systemic and could damage employee morale and motivation.",
+              "C": "Avoiding discussion misses the opportunity for learning and improvement, and may allow similar issues to recur.",
+              "D": "While training is valuable, jumping directly to formal training without discussion may seem punitive rather than developmental."
+            },
+            "competencies_tested": ["Employee Development", "Coaching Skills", "Performance Management"],
+            "scenario_context": "Staff development and learning",
+            "difficulty_rating": 3
+          },
+          {
+            "id": "basic_q12",
+            "question_number": 12,
+            "category": "Administrative Record Keeping",
+            "question_text": "Which documentation approach ensures proper institutional learning and compliance?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Complete a comprehensive incident analysis report for HR and regulatory files"
+              },
+              {
+                "option_id": "B",
+                "text": "Log the customer complaint with detailed resolution steps in the service database"
+              },
+              {
+                "option_id": "C",
+                "text": "Add a brief notation to Ms. Kavita's employee performance record"
+              },
+              {
+                "option_id": "D",
+                "text": "Create both comprehensive incident documentation and customer service logs"
+              }
+            ],
+            "correct_answer": "D",
+            "explanation_correct": "Comprehensive documentation serves multiple purposes: incident analysis for learning, customer service tracking for relationship management, and compliance requirements. This ensures all aspects are covered.",
+            "explanations_incorrect": {
+              "A": "Only incident reporting misses customer service aspects and relationship management opportunities.",
+              "B": "Only customer service logging misses the broader institutional learning and compliance requirements.",
+              "C": "Brief notation in employee files is insufficient for comprehensive learning and may not meet compliance requirements."
+            },
+            "competencies_tested": ["Documentation Management", "Compliance Awareness", "Institutional Learning"],
+            "scenario_context": "Record keeping and documentation",
+            "difficulty_rating": 3
+          },
+          {
+            "id": "basic_q13",
+            "question_number": 13,
+            "category": "Customer Retention Strategy",
+            "question_text": "What follow-up action best demonstrates ongoing commitment to Mr. Suresh's banking relationship?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Designate a specialized relationship manager for all his future banking needs"
+              },
+              {
+                "option_id": "B",
+                "text": "Contact him within two business days to confirm his satisfaction with the resolution"
+              },
+              {
+                "option_id": "C",
+                "text": "Upgrade his account status to include premium banking privileges"
+              },
+              {
+                "option_id": "D",
+                "text": "Arrange for a senior executive to send a personalized apology correspondence"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "Timely follow-up contact shows genuine concern for customer satisfaction and provides opportunity to address any remaining concerns. This personal touch demonstrates ongoing commitment.",
+            "explanations_incorrect": {
+              "A": "Specialized relationship manager may be excessive for this situation and could set expensive precedents.",
+              "C": "Account upgrades may be costly and don't directly address the communication issue that caused the problem.",
+              "D": "Senior executive letters may seem impersonal and could be viewed as over-reaction to a relatively minor issue."
+            },
+            "competencies_tested": ["Customer Relationship Management", "Follow-up Strategy", "Service Recovery"],
+            "scenario_context": "Customer retention and follow-up",
+            "difficulty_rating": 3
+          },
+          {
+            "id": "basic_q14",
+            "question_number": 14,
+            "category": "Organizational Learning Distribution",
+            "question_text": "How should you share the lessons learned from this incident across your team?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Present it as an educational case study during the next staff meeting"
+              },
+              {
+                "option_id": "B",
+                "text": "Distribute a written memo outlining revised charge disclosure protocols"
+              },
+              {
+                "option_id": "C",
+                "text": "Limit discussion to senior staff members and supervisors only"
+              },
+              {
+                "option_id": "D",
+                "text": "Combine both team meeting discussion and written procedural guidance"
+              }
+            ],
+            "correct_answer": "D",
+            "explanation_correct": "Combining discussion and written guidance ensures comprehensive learning. Interactive discussion allows questions and clarification, while written procedures provide ongoing reference.",
+            "explanations_incorrect": {
+              "A": "Only verbal discussion may not provide lasting reference material and may miss staff who weren't present.",
+              "B": "Only written memos may not allow for questions, clarification, or interactive learning opportunities.",
+              "C": "Limiting to senior staff misses the opportunity to educate all team members who interact with customers."
+            },
+            "competencies_tested": ["Team Communication", "Knowledge Transfer", "Learning Facilitation"],
+            "scenario_context": "Team learning and communication",
+            "difficulty_rating": 3
+          },
+          {
+            "id": "basic_q15",
+            "question_number": 15,
+            "category": "Effectiveness Evaluation Criteria",
+            "question_text": "Which combination of outcomes would indicate successful crisis management and leadership?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Mr. Suresh chooses not to escalate the matter through formal complaint channels"
+              },
+              {
+                "option_id": "B",
+                "text": "The branch experiences no comparable miscommunication incidents in subsequent weeks"
+              },
+              {
+                "option_id": "C",
+                "text": "Ms. Kavita demonstrates measurable improvement in customer interaction evaluations"
+              },
+              {
+                "option_id": "D",
+                "text": "Achievement of all the above positive outcomes collectively"
+              }
+            ],
+            "correct_answer": "D",
+            "explanation_correct": "Comprehensive success requires multiple positive outcomes: immediate resolution (no escalation), systematic improvement (no recurrence), and individual development (staff improvement). All factors together indicate effective leadership.",
+            "explanations_incorrect": {
+              "A": "While important, avoiding escalation alone doesn't indicate systematic improvement or learning.",
+              "B": "Preventing recurrence is valuable but doesn't measure immediate resolution quality or individual development.",
+              "C": "Individual staff improvement is important but doesn't capture broader systematic or customer satisfaction measures."
+            },
+            "competencies_tested": ["Success Measurement", "Comprehensive Evaluation", "Multi-dimensional Assessment"],
+            "scenario_context": "Overall success evaluation",
+            "difficulty_rating": 4
+          }
+        ]
+      },
+      "advanced_level": {
+        "difficulty": "Advanced/Expert",
+        "target_experience": "Senior Managers, Executives",
+        "questions": [
+          {
+            "id": "advanced_q1",
+            "question_number": 1,
+            "category": "Strategic Stakeholder Prioritization Framework",
+            "question_text": "The escalating dispute creates ripple effects across multiple constituencies: observing customers, your staff cohort, and institutional credibility. When formulating your intervention approach, which stakeholder dynamic should serve as your foundational decision-making anchor?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Emphasize rapid customer appeasement to mitigate potential digital reputation threats and viral exposure risks"
+              },
+              {
+                "option_id": "B",
+                "text": "Safeguard team confidence and protocol adherence to preserve sustainable operational foundations"
+              },
+              {
+                "option_id": "C",
+                "text": "Synthesize competing stakeholder needs while ensuring your resolution establishes beneficial precedents for future scenarios"
+              },
+              {
+                "option_id": "D",
+                "text": "Emphasize regulatory adherence and liability protection to prevent supervisory intervention"
+              }
+            ],
+            "correct_answer": "C",
+            "explanation_correct": "Strategic leadership requires balancing all stakeholder interests while creating sustainable frameworks for future operations. This approach ensures long-term organizational benefit rather than short-term fixes that may create bigger problems later.",
+            "explanations_incorrect": {
+              "A": "Focusing solely on reputation management ignores staff development and systemic improvement opportunities, potentially creating unsustainable precedents.",
+              "B": "Prioritizing only staff concerns over customer experience could damage relationships and market position in competitive banking sector.",
+              "D": "While compliance is important, over-emphasizing legal protection may result in rigid responses that don't optimize stakeholder outcomes or learning opportunities."
+            },
+            "competencies_tested": ["Strategic Thinking", "Stakeholder Management", "Systems Perspective", "Precedent Setting"],
+            "scenario_context": "Multi-stakeholder impact analysis and strategic prioritization",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q2",
+            "question_number": 2,
+            "category": "Advanced Behavioral Psychology in Crisis Management",
+            "question_text": "Mr. Suresh displays classic stress indicators: elevated vocal patterns, visible agitation, and blame-focused rhetoric. Ms. Kavita demonstrates protective responses with rigid posturing and procedural defensiveness. Which sophisticated intervention technique simultaneously addresses both psychological dynamics?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Deploy behavioral mirroring with Mr. Suresh while redirecting Ms. Kavita toward solution-oriented thinking"
+              },
+              {
+                "option_id": "B",
+                "text": "Utilize comprehensive listening strategies with Mr. Suresh while offering subtle reassurance cues to Ms. Kavita"
+              },
+              {
+                "option_id": "C",
+                "text": "Apply emotional recognition and validation techniques for both parties before transitioning to collaborative problem-solving"
+              },
+              {
+                "option_id": "D",
+                "text": "Introduce analytical questioning frameworks that shift both individuals from reactive to reflective cognitive states"
+              }
+            ],
+            "correct_answer": "C",
+            "explanation_correct": "Emotional validation addresses the underlying psychological needs of both parties - the customer's need to be heard and the employee's need for professional recognition. This creates psychological safety for collaborative problem-solving.",
+            "explanations_incorrect": {
+              "A": "Behavioral mirroring may escalate the customer's emotional state, while separate treatment of staff could create perceptions of favoritism.",
+              "B": "While listening is important, subtle cues may not adequately address the employee's defensive state or create collaborative dynamics.",
+              "D": "Moving directly to analytical thinking without emotional acknowledgment may increase resistance from both emotionally activated parties."
+            },
+            "competencies_tested": ["Emotional Intelligence", "Crisis Psychology", "De-escalation Techniques", "Behavioral Analysis"],
+            "scenario_context": "Psychological intervention in high-stress interpersonal conflict",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q3",
+            "question_number": 3,
+            "category": "Regulatory Navigation in Dynamic Compliance Environment",
+            "question_text": "Your investigation reveals that charge disclosures technically occurred but fall short of recently enacted RBI transparency mandates (implemented this month). How do you reconcile this compliance transition challenge?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Immediately reverse charges and retroactively audit all recent transactions for compliance alignment"
+              },
+              {
+                "option_id": "B",
+                "text": "Recognize implementation period complexities, eliminate current charges, and accelerate compliance integration"
+              },
+              {
+                "option_id": "C",
+                "text": "Uphold charges under previous regulatory framework while offering prospective fee accommodations"
+              },
+              {
+                "option_id": "D",
+                "text": "Engage legal counsel while suspending transaction completion pending compliance clarification"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "This approach acknowledges the transition period reality while demonstrating proactive compliance commitment. It balances customer service with regulatory adaptation and shows institutional responsibility during change periods.",
+            "explanations_incorrect": {
+              "A": "Immediate retroactive auditing may be operationally disruptive and create unnecessary customer contacts during transition periods.",
+              "C": "Strictly adhering to old frameworks when new requirements exist shows poor regulatory adaptation and customer service.",
+              "D": "Legal consultation delays customer resolution and may be excessive for transition period issues that require business judgment."
+            },
+            "competencies_tested": ["Regulatory Compliance", "Change Management", "Business Judgment", "Risk Assessment"],
+            "scenario_context": "Navigation of evolving regulatory requirements during implementation transition",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q4",
+            "question_number": 4,
+            "category": "Systemic vs. Individual Performance Attribution",
+            "question_text": "Ms. Kavita discloses that her charge communication approach mirrors training received from the former branch manager six months prior, indicating potential institutional knowledge gaps. How do you navigate personal versus organizational responsibility?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Maintain individual accountability for current practice while implementing comprehensive team retraining"
+              },
+              {
+                "option_id": "B",
+                "text": "Accept institutional oversight gaps, provide individual support, and assume personal responsibility for training deficiencies"
+              },
+              {
+                "option_id": "C",
+                "text": "Conduct comprehensive staff assessment to determine knowledge distribution before assigning accountability"
+              },
+              {
+                "option_id": "D",
+                "text": "Postpone accountability determination until corrective educational measures are established"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "Leadership requires taking responsibility for systemic failures while supporting individual team members. This approach demonstrates accountability, builds trust, and creates a learning culture rather than a blame culture.",
+            "explanations_incorrect": {
+              "A": "Holding individuals accountable for systemic training failures undermines trust and doesn't address the root organizational issues that enabled the problem.",
+              "C": "While assessment is valuable, delaying support for the individual in crisis doesn't demonstrate immediate leadership responsibility and care.",
+              "D": "Postponing accountability avoids leadership responsibility and may leave team members uncertain about expectations and support."
+            },
+            "competencies_tested": ["Leadership Accountability", "Systems Thinking", "Team Support", "Organizational Learning"],
+            "scenario_context": "Balancing individual and organizational responsibility in systemic failures",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q5",
+            "question_number": 5,
+            "category": "Reputation Management Under Digital Surveillance",
+            "question_text": "You observe multiple customers with activated mobile devices appearing to document the interaction. One patron references a recent viral banking controversy. Which strategy addresses both immediate and strategic reputation considerations?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Diplomatically discourage recording while transitioning the discussion to confidential space"
+              },
+              {
+                "option_id": "B",
+                "text": "Embrace transparency by resolving publicly to demonstrate exemplary conflict management"
+              },
+              {
+                "option_id": "C",
+                "text": "Maintain professional standards, execute effective public resolution, then pursue private follow-up"
+              },
+              {
+                "option_id": "D",
+                "text": "Deploy preemptive damage control through universal customer accommodation offers"
+              }
+            ],
+            "correct_answer": "C",
+            "explanation_correct": "This approach leverages the recording opportunity to demonstrate excellent service recovery while maintaining professional boundaries. Public resolution shows transparency; private follow-up ensures comprehensive relationship repair without over-exposure.",
+            "explanations_incorrect": {
+              "A": "Discouraging recording may appear defensive and could escalate suspicions about the bank's handling of customer issues.",
+              "B": "While transparency is valuable, completely public resolution may expose sensitive customer or operational details inappropriately.",
+              "D": "Universal accommodation without addressing root causes may create unsustainable precedents and doesn't demonstrate problem-solving leadership."
+            },
+            "competencies_tested": ["Reputation Management", "Digital Age Leadership", "Public Relations", "Strategic Communication"],
+            "scenario_context": "Managing organizational reputation under potential viral exposure",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q6",
+            "question_number": 6,
+            "category": "High-Stakes Communication Under Documentation",
+            "question_text": "With potential recording devices capturing your every statement, your verbal responses become permanent institutional record. Which communication strategy ensures effective resolution while optimizing organizational representation?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Utilize approved corporate messaging while preserving genuine empathy and solution focus"
+              },
+              {
+                "option_id": "B",
+                "text": "Demonstrate institutional transparency by explaining both the failure and remediation process"
+              },
+              {
+                "option_id": "C",
+                "text": "Prioritize emotional acknowledgment and swift resolution while avoiding institutional liability admissions"
+              },
+              {
+                "option_id": "D",
+                "text": "Deliver comprehensive policy context to establish procedural validity and organizational competence"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "Transparency about both problems and solutions demonstrates institutional integrity and learning orientation. This approach builds trust by showing the organization takes responsibility and has systematic improvement processes.",
+            "explanations_incorrect": {
+              "A": "While corporate messaging maintains consistency, it may appear scripted and less authentic, potentially undermining trust in recorded contexts.",
+              "C": "Avoiding acknowledgment of institutional responsibility may appear evasive and could damage trust, especially when recorded for potential wider viewing.",
+              "D": "Extensive policy explanations may seem defensive and could overwhelm the emotional needs of the situation, appearing bureaucratic rather than customer-focused."
+            },
+            "competencies_tested": ["High-Stakes Communication", "Institutional Representation", "Transparency Management", "Trust Building"],
+            "scenario_context": "Communication strategy under potential permanent documentation",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q7",
+            "question_number": 7,
+            "category": "Team Psychology and Collective Performance Impact",
+            "question_text": "Three additional tellers have paused their duties to observe your management of Ms. Kavita's situation, recognizing their own procedural similarities. Your approach will significantly influence collective confidence and subsequent performance. What strategy optimizes current resolution and team development?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Display unwavering support for Ms. Kavita while internally documenting improvement opportunities"
+              },
+              {
+                "option_id": "B",
+                "text": "Transform this into experiential learning by engaging additional staff in collaborative problem-solving"
+              },
+              {
+                "option_id": "C",
+                "text": "Manage the situation discretely to prevent undermining Ms. Kavita's peer relationships"
+              },
+              {
+                "option_id": "D",
+                "text": "Simultaneously address immediate concerns and broader team practices through visible, developmental leadership"
+              }
+            ],
+            "correct_answer": "D",
+            "explanation_correct": "This approach demonstrates leadership that supports individual team members while addressing systemic issues. Visible developmental leadership shows the team how to handle difficult situations professionally while learning from challenges.",
+            "explanations_incorrect": {
+              "A": "While supportive, purely private documentation misses the opportunity for team learning and may not address broader procedural concerns.",
+              "B": "Engaging other staff during an active customer crisis could appear unprofessional and may overwhelm the customer with too many participants.",
+              "C": "Discrete management may miss the opportunity to demonstrate leadership principles and learning culture to the observing team."
+            },
+            "competencies_tested": ["Team Leadership", "Performance Psychology", "Visible Leadership", "Cultural Development"],
+            "scenario_context": "Leading team development through crisis management demonstration",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q8",
+            "question_number": 8,
+            "category": "Precedent Architecture for Sustainable Operations",
+            "question_text": "Your resolution methodology will create operational precedent for analogous future conflicts. You must optimize immediate satisfaction against long-term institutional sustainability. Which approach creates the most strategic precedent framework?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Establish structured exception criteria with defined parameters for charge reversals in communication breakdowns"
+              },
+              {
+                "option_id": "B",
+                "text": "Create individualized assessment protocols maintaining managerial discretion for dispute resolution"
+              },
+              {
+                "option_id": "C",
+                "text": "Institute automated charge cancellation for any disputed unclear communication claims"
+              },
+              {
+                "option_id": "D",
+                "text": "Design graduated response systems based on customer history, dispute complexity, and process failure severity"
+              }
+            ],
+            "correct_answer": "A",
+            "explanation_correct": "Structured criteria provide clear guidelines for staff while ensuring consistent, fair treatment of customers. This creates predictable frameworks that prevent arbitrary decisions and enable systematic improvement of communication processes.",
+            "explanations_incorrect": {
+              "B": "While flexibility is valuable, excessive managerial discretion can create inconsistency and may not provide clear guidance for staff handling similar situations.",
+              "C": "Automatic reversals could be financially unsustainable and might encourage frivolous disputes rather than genuine communication improvement.",
+              "D": "While comprehensive, overly complex systems may be difficult to implement consistently and could create administrative burden without clear benefit."
+            },
+            "competencies_tested": ["Strategic Planning", "Policy Development", "Operational Sustainability", "Framework Design"],
+            "scenario_context": "Creating sustainable operational precedents through current resolution",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q9",
+            "question_number": 9,
+            "category": "Organizational Intelligence and Continuous Improvement",
+            "question_text": "This situation exposes potential deficiencies in charge communication, staff preparation, and customer interface protocols. Which comprehensive approach ensures institutional learning without operational disruption?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Suspend all fee-generating transactions until complete process review and enhancement"
+              },
+              {
+                "option_id": "B",
+                "text": "Execute parallel pilot improvement programs while maintaining existing operational continuity"
+              },
+              {
+                "option_id": "C",
+                "text": "Perform immediate audit of comparable recent transactions to identify and proactively resolve additional exposure"
+              },
+              {
+                "option_id": "D",
+                "text": "Form interdisciplinary improvement teams to redesign communication systems with integrated customer input"
+              }
+            ],
+            "correct_answer": "C",
+            "explanation_correct": "Immediate auditing identifies potential similar issues before they become customer complaints, demonstrating proactive responsibility. This approach balances operational continuity with systematic risk mitigation and shows commitment to customer service excellence.",
+            "explanations_incorrect": {
+              "A": "Suspending operations would be extremely disruptive and disproportionate to the issue, potentially damaging customer relationships and business operations.",
+              "B": "While pilot programs are valuable long-term, they don't address immediate exposure from similar recent transactions that may need proactive attention.",
+              "D": "Comprehensive redesign teams are excellent for long-term improvement but don't address immediate risk mitigation needs for recent similar transactions."
+            },
+            "competencies_tested": ["Risk Management", "Proactive Leadership", "Operational Continuity", "Systematic Improvement"],
+            "scenario_context": "Balancing immediate risk mitigation with long-term systematic improvement",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q10",
+            "question_number": 10,
+            "category": "Ethical Leadership Under Competitive Pressure",
+            "question_text": "Mr. Suresh threatens account closure and negative publicity dissemination. Simple charge waiver and additional incentives could resolve this, but may not address fundamental process inadequacy. What ethical leadership framework balances competing priorities?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Concentrate on Mr. Suresh retention through comprehensive compensation while discreetly improving processes"
+              },
+              {
+                "option_id": "B",
+                "text": "Emphasize systematic enhancement even if it risks losing Mr. Suresh's banking relationship"
+              },
+              {
+                "option_id": "C",
+                "text": "Pursue both immediate relationship restoration and transparent systematic improvement with Mr. Suresh's involvement"
+              },
+              {
+                "option_id": "D",
+                "text": "Escalate to senior leadership to avoid decisions that could establish expensive precedents"
+              }
+            ],
+            "correct_answer": "C",
+            "explanation_correct": "Ethical leadership integrates stakeholder needs rather than choosing between them. Involving the customer in systematic improvement demonstrates transparency, builds trust, and creates collaborative resolution that addresses both immediate and long-term concerns.",
+            "explanations_incorrect": {
+              "A": "Focusing only on retention without transparency about systematic improvement may temporarily resolve the issue but doesn't build long-term trust or address underlying problems.",
+              "B": "While systematic improvement is important, dismissing immediate customer relationship needs could damage trust and market reputation unnecessarily.",
+              "D": "Escalation avoids leadership responsibility and may delay resolution, potentially causing more damage to customer relationships and staff confidence."
+            },
+            "competencies_tested": ["Ethical Decision Making", "Stakeholder Integration", "Transparent Leadership", "Collaborative Problem Solving"],
+            "scenario_context": "Balancing competitive pressure with ethical systematic improvement",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q11",
+            "question_number": 11,
+            "category": "Performance Evaluation in Crisis Context Integration",
+            "question_text": "Ms. Kavita's upcoming performance review in two weeks must incorporate this incident fairly. How do you ensure balanced assessment considering both individual execution and systemic contributing factors?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Isolate this incident from performance evaluation to prevent penalties for following established procedures"
+              },
+              {
+                "option_id": "B",
+                "text": "Utilize this experience as developmental opportunity while recognizing contributing institutional factors"
+              },
+              {
+                "option_id": "C",
+                "text": "Delay performance assessment until systematic process improvements are fully implemented"
+              },
+              {
+                "option_id": "D",
+                "text": "Document both procedural compliance and future scenario improvement requirements"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "Using the incident as development opportunity while acknowledging systemic factors demonstrates fair, growth-oriented performance management. This approach builds skills while recognizing that individual performance occurs within organizational systems.",
+            "explanations_incorrect": {
+              "A": "Complete isolation misses valuable learning opportunities and may not address communication skills that could be improved regardless of systemic issues.",
+              "C": "Delaying evaluation disrupts performance management cycles and may create uncertainty for the employee about their standing and development needs.",
+              "D": "While documentation is important, simply recording requirements doesn't provide the developmental support and coaching that effective performance management requires."
+            },
+            "competencies_tested": ["Performance Management", "Developmental Leadership", "Fair Assessment", "Systems Perspective"],
+            "scenario_context": "Integrating crisis incidents into fair performance evaluation processes",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q12",
+            "question_number": 12,
+            "category": "Customer Economic Value vs. Equitable Treatment Analysis",
+            "question_text": "Mr. Suresh maintains ₹15 lakh deposits and generates 2-3 annual referrals. However, accommodating his requests might establish expectations among other customers. How do you optimize relationship value while maintaining service equity?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Apply customer lifetime value calculations to determine proportional resolution investments"
+              },
+              {
+                "option_id": "B",
+                "text": "Emphasize relationship preservation while establishing clear policy communication for future interactions"
+              },
+              {
+                "option_id": "C",
+                "text": "Apply uniform treatment standards regardless of account value to maintain procedural consistency"
+              },
+              {
+                "option_id": "D",
+                "text": "Develop value-based resolution tiers while preserving consistent service quality standards"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "This approach balances relationship value with ethical treatment by focusing on clear communication rather than differential treatment. It preserves valuable relationships while establishing sustainable precedents for all customers.",
+            "explanations_incorrect": {
+              "A": "Pure economic calculations may create ethical issues and could appear discriminatory to other customers if the approach becomes known.",
+              "C": "While equity is important, completely ignoring relationship value may result in losing valuable customers to competitors who recognize customer value differences.",
+              "D": "Formal tiered systems based on account value could create perception of unfair treatment and may conflict with fair banking practice expectations."
+            },
+            "competencies_tested": ["Customer Value Management", "Ethical Decision Making", "Relationship Balance", "Policy Consistency"],
+            "scenario_context": "Balancing customer economic value with equitable treatment principles",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q13",
+            "question_number": 13,
+            "category": "Technology-Enabled Process Enhancement Strategy",
+            "question_text": "Prevention of similar incidents could involve automated charge alerts, digital confirmations, or AI-powered communication verification. Which technology deployment approach maximizes benefit while minimizing operational disruption?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Execute comprehensive digital transformation of all customer communication systems immediately"
+              },
+              {
+                "option_id": "B",
+                "text": "Trial advanced notification capabilities for significant transactions while enhancing manual procedures"
+              },
+              {
+                "option_id": "C",
+                "text": "Prioritize training improvements before technology introduction to prevent compounding existing issues"
+              },
+              {
+                "option_id": "D",
+                "text": "Implement integrated technological solutions that augment rather than replace human interaction protocols"
+              }
+            ],
+            "correct_answer": "D",
+            "explanation_correct": "Augmenting human interactions with technology preserves the personal service that banking customers value while adding systematic safeguards. This approach reduces error risk without eliminating the human touch that differentiates quality service.",
+            "explanations_incorrect": {
+              "A": "Comprehensive immediate transformation could be disruptive and may introduce new problems before staff adapt to new systems.",
+              "B": "While piloting is prudent, limiting to high-value transactions only doesn't address systematic communication issues across all customer interactions.",
+              "C": "Sequential training-then-technology approach may delay beneficial improvements and doesn't leverage technology's ability to support and enhance training outcomes."
+            },
+            "competencies_tested": ["Technology Strategy", "Change Management", "Human-Technology Integration", "Process Enhancement"],
+            "scenario_context": "Strategic technology implementation for systematic process improvement",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q14",
+            "question_number": 14,
+            "category": "Strategic Stakeholder Communication Sequencing",
+            "question_text": "Various parties require incident notification: regional management, compliance division, HR department, and quality assurance teams. Which communication approach optimizes transparency while maintaining operational authority?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Simultaneously notify all stakeholders to ensure complete transparency and immediate corrective mobilization"
+              },
+              {
+                "option_id": "B",
+                "text": "Initially brief direct supervisor, then collaborate on comprehensive stakeholder communication strategy"
+              },
+              {
+                "option_id": "C",
+                "text": "Complete resolution process before reporting to enable thorough incident analysis and solution documentation"
+              },
+              {
+                "option_id": "D",
+                "text": "Customize communications by stakeholder function: immediate compliance notification, detailed management analysis"
+              }
+            ],
+            "correct_answer": "B",
+            "explanation_correct": "Briefing direct supervisor first maintains chain of command while enabling collaborative approach to broader communications. This ensures appropriate context and coordination without delaying necessary notifications or undermining authority.",
+            "explanations_incorrect": {
+              "A": "Simultaneous notification to all parties may create confusion about communication coordination and could overwhelm stakeholders with unprocessed information.",
+              "C": "Delaying all reporting until complete resolution may violate notification requirements and could appear like information withholding if issues escalate.",
+              "D": "While customization is valuable, doing so without supervisory coordination may create inconsistent messaging and undermine organizational communication protocols."
+            },
+            "competencies_tested": ["Stakeholder Communication", "Organizational Protocol", "Strategic Communication", "Chain of Command"],
+            "scenario_context": "Managing complex stakeholder communication requirements during crisis resolution",
+            "difficulty_rating": 5
+          },
+          {
+            "id": "advanced_q15",
+            "question_number": 15,
+            "category": "Leadership Legacy and Institutional Culture Transformation",
+            "question_text": "Your crisis management approach will become a defining example of your leadership philosophy and institutional values for staff, customers, and management. Which methodology creates optimal long-term cultural influence?",
+            "options": [
+              {
+                "option_id": "A",
+                "text": "Exhibit decisive authority and customer priority through rapid, clear resolution"
+              },
+              {
+                "option_id": "B",
+                "text": "Demonstrate collaborative problem-solving with staff input while maintaining clear decision ownership"
+              },
+              {
+                "option_id": "C",
+                "text": "Display authentic vulnerability and growth mindset by acknowledging uncertainties and seeking diverse input"
+              },
+              {
+                "option_id": "D",
+                "text": "Integrate comprehensive leadership elements: customer empathy, staff development, process enhancement, and transparent communication"
+              }
+            ],
+            "correct_answer": "D",
+            "explanation_correct": "Comprehensive leadership integration demonstrates the multifaceted nature of effective leadership in complex organizational contexts. This approach models how to balance competing priorities while maintaining focus on sustainable improvement and stakeholder value creation.",
+            "explanations_incorrect": {
+              "A": "While decisiveness is valuable, focusing only on authority and speed may miss opportunities for team development and systematic improvement.",
+              "B": "Collaborative problem-solving is important but may not fully demonstrate the comprehensive leadership capabilities needed in complex organizational challenges.",
+              "C": "Vulnerability and growth mindset are valuable but need to be balanced with decisive action and clear direction during crisis situations."
+            },
+            "competencies_tested": ["Comprehensive Leadership", "Cultural Influence", "Legacy Building", "Multi-dimensional Integration"],
+            "scenario_context": "Creating long-term cultural impact through crisis leadership demonstration",
+            "difficulty_rating": 5
+          }
+        ]
+      }
+    },
+    "metadata": {
+      "version": "1.0",
+      "created_date": "2025-09-01",
+      "last_updated": "2025-09-01",
+      "total_questions": 30,
+      "competency_framework": [
+        "Crisis Management",
+        "Communication Skills",
+        "Leadership Presence",
+        "Conflict Resolution",
+        "Team Management",
+        "Customer Service",
+        "Process Improvement",
+        "Stakeholder Management",
+        "Strategic Thinking",
+        "Emotional Intelligence",
+        "Decision Making",
+        "Performance Management",
+        "Change Management",
+        "Ethical Leadership",
+        "Systems Thinking"
+      ],
+      "assessment_scoring": {
+        "basic_level": {
+          "passing_score": 70,
+          "excellent_score": 85,
+          "time_limit_minutes": 30
+        },
+        "advanced_level": {
+          "passing_score": 75,
+          "excellent_score": 90,
+          "time_limit_minutes": 45
+        }
+      },
+      "implementation_notes": {
+        "ar_vr_integration": "Questions designed for immersive AR/VR training environments with 3D banking branch simulation",
+        "adaptive_learning": "JSON structure supports adaptive questioning based on previous responses",
+        "analytics_tracking": "Each question includes competency mapping for detailed performance analytics",
+        "customization_options": "Difficulty ratings and categories allow for personalized learning paths"
+      }
+    }
+  }
+}
