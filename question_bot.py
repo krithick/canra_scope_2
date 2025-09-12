@@ -446,8 +446,8 @@ class QuestionBot(BaseLLMBot):
 The correct answer is {paraphrased_q['correct_answer']}: "{correct_answer_text}"
 
 Here's why:
-✅ Correct choice: {correct_explanation}
-❌ Your choice: {user_explanation}
+Correct choice: {correct_explanation}
+Your choice: {user_explanation}
 
 Remember: Focus on the core leadership principles when making decisions."""
             
