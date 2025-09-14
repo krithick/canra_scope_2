@@ -76,10 +76,10 @@ class QuestionBot(BaseLLMBot):
         except Exception as e:
             raise Exception(f"Error starting session: {str(e)}")
 
-    async def submit_answer(self, session_id: str, selected_option: str, time_taken: int = 30) -> Dict:
+    async def submit_answer(self, session_id: str, user_input: str, time_taken: int = 30, is_timeout: bool = False) -> Dict:
         """
         API: POST /api/question-sessions/{session_id}/answer
-        Processes answer submission
+        Processes answer submission (speech or timeout)
         """
         try:
             db = await self._get_db()
@@ -95,13 +95,25 @@ class QuestionBot(BaseLLMBot):
             current_q_original = session.questions_data[session.current_question_index]
             paraphrased_q = session.paraphrased_questions_used[session.current_question_index]
             
-            # Validate answer
-            user_answer = selected_option.upper()
-            if user_answer not in ['A', 'B', 'C', 'D']:
-                raise Exception("Please select A, B, C, or D")
+            # Handle timeout case
+            if is_timeout:
+                return await self._handle_timeout(session, current_q_original, paraphrased_q, time_taken, db)
+            
+            # Process speech input to extract option
+            user_answer = await self._extract_option_from_speech(user_input, paraphrased_q)
+            
+            if not user_answer:
+                return {
+                    "is_valid_answer": False,
+                    "feedback": "I couldn't understand which option you selected. Please clearly state A, B, C, or D, or mention the option text.",
+                    "current_score": session.score,
+                    "question_number": session.current_question_index + 1,
+                    "total_questions": session.total_questions,
+                    "retry_allowed": True
+                }
             
             # Check correctness
-            is_correct = user_answer == paraphrased_q['correct_answer'].upper()
+            is_correct = user_answer.upper() == paraphrased_q['correct_answer'].upper()
             
             # Get answer text
             user_answer_text = next(
@@ -446,8 +458,8 @@ class QuestionBot(BaseLLMBot):
 The correct answer is {paraphrased_q['correct_answer']}: "{correct_answer_text}"
 
 Here's why:
-✅ Correct choice: {correct_explanation}
-❌ Your choice: {user_explanation}
+ Correct choice: {correct_explanation}
+ Your choice: {user_explanation}
 
 Remember: Focus on the core leadership principles when making decisions."""
             
@@ -539,6 +551,98 @@ Return ONLY JSON:
             insights.append(f"Focus on areas where you answered incorrectly ({incorrect_count} questions).")
             
         return insights
+
+    async def _extract_option_from_speech(self, speech_text: str, question_data: Dict) -> Optional[str]:
+        """Extract A/B/C/D option from speech using LLM"""
+        try:
+            options_text = "\n".join([f"{opt['option_id']}: {opt['text']}" for opt in question_data['options']])
+            
+            prompt = f"""User said: "{speech_text}"
+
+Question options:
+{options_text}
+
+Extract which option (A, B, C, or D) the user selected. They might say:
+- The letter directly: "A", "B", "C", "D"
+- Option text: part of the actual option content
+- Descriptive: "first one", "second option", etc.
+
+Return ONLY the letter (A, B, C, or D) or "INVALID" if unclear."""
+            
+            contents = [
+                types.Content(
+                    role="user",
+                    parts=[types.Part.from_text(text=prompt)]
+                )
+            ]
+            
+            response = await self.model.aio.models.generate_content(
+                model=self.llm_model,
+                contents=contents,
+            )
+            
+            extracted = response.text.strip().upper()
+            return extracted if extracted in ['A', 'B', 'C', 'D'] else None
+            
+        except Exception as e:
+            print(f"Error extracting option from speech: {e}")
+            return None
+
+    async def _handle_timeout(self, session, current_q_original: Dict, paraphrased_q: Dict, time_taken: int, db) -> Dict:
+        """Handle timeout scenario - show correct answer and move to next"""
+        try:
+            correct_option_text = next(
+                opt['text'] for opt in paraphrased_q['options'] 
+                if opt['option_id'] == paraphrased_q['correct_answer']
+            )
+            
+            # Create timeout attempt record
+            attempt = QuestionAttemptRecord(
+                question_id=current_q_original['id'],
+                original_question=current_q_original,
+                paraphrased_question=paraphrased_q,
+                user_answer="TIMEOUT",
+                user_answer_text="No answer provided (timeout)",
+                correct_answer_original=current_q_original['correct_answer'],
+                correct_answer_paraphrased=paraphrased_q['correct_answer'],
+                is_correct=False,
+                time_taken_seconds=time_taken
+            )
+            
+            session.question_attempts.append(attempt.dict())
+            
+            # Move to next question
+            session.current_question_index += 1
+            session.current_state = "awaiting_answer"
+            
+            # Check if session completed
+            is_completed = session.current_question_index >= len(session.questions_data)
+            if is_completed:
+                session.is_completed = True
+                session.current_state = "completed"
+            
+            await db.update_question_session(session)
+            
+            # Get next question if available
+            next_question = None
+            if not is_completed:
+                next_question = session.paraphrased_questions_used[session.current_question_index]
+            
+            return {
+                "is_timeout": True,
+                "feedback": f"Time's up! The correct answer was {paraphrased_q['correct_answer']}: \"{correct_option_text}\"",
+                "correct_answer": paraphrased_q['correct_answer'],
+                "correct_answer_text": correct_option_text,
+                "awaiting_explanation": False,
+                "current_score": session.score,
+                "question_number": session.current_question_index,
+                "total_questions": session.total_questions,
+                "is_completed": is_completed,
+                "next_question": next_question
+            }
+            
+        except Exception as e:
+            raise Exception(f"Error handling timeout: {str(e)}")
 
     def _get_paraphrasing_prompt(self, difficulty: str) -> str:
         """Get prompt for question paraphrasing"""

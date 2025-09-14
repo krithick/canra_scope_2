@@ -543,11 +543,12 @@ async def start_question_session(
 @app.post("/api/question-sessions/{session_id}/answer")
 async def submit_question_answer(
     session_id: str,
-    selected_option: str = Form(..., description="A, B, C, or D"),
+    user_input: str = Form(..., description="Speech text or option letter"),
     time_taken: int = Form(default=30, description="Time taken in seconds"),
+    is_timeout: bool = Form(default=False, description="Whether this is a timeout submission"),
     db: MongoDB = Depends(get_db)
 ):
-    """Submit answer to current question"""
+    """Submit answer to current question (speech or timeout)"""
     try:
         # Get session to find the scenario
         session = await db.get_question_session(session_id)
@@ -560,7 +561,7 @@ async def submit_question_answer(
             raise HTTPException(status_code=400, detail="Invalid bot type")
         
         # Submit answer through bot
-        result = await bot.submit_answer(session_id, selected_option, time_taken)
+        result = await bot.submit_answer(session_id, user_input, time_taken, is_timeout)
         
         return {
             "success": True,
@@ -569,6 +570,35 @@ async def submit_question_answer(
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error submitting answer: {str(e)}")
+
+@app.post("/api/question-sessions/{session_id}/timeout")
+async def handle_question_timeout(
+    session_id: str,
+    time_taken: int = Form(default=30, description="Time taken before timeout"),
+    db: MongoDB = Depends(get_db)
+):
+    """Handle question timeout - show correct answer and move to next"""
+    try:
+        # Get session to find the scenario
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get the appropriate bot
+        bot = await bot_factory.get_bot(session.scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Invalid bot type")
+        
+        # Handle timeout through bot
+        result = await bot.submit_answer(session_id, "", time_taken, is_timeout=True)
+        
+        return {
+            "success": True,
+            "data": result
+        }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error handling timeout: {str(e)}")
 
 @app.post("/api/question-sessions/{session_id}/explain")  
 async def submit_explanation(
