@@ -80,7 +80,7 @@ def replace_name(original_text, your_name,replace):
         return original_text.replace(replace, your_name)
     return original_text
 
-@app.post("/llm/chat")
+@app.post("/api/chat")
 async def chat(message: str = Form(...),
     session_id: Optional[str] = Form(default=None),
     scenario_name: Optional[str] = Form(default=None),
@@ -146,7 +146,7 @@ async def chat(message: str = Form(...),
         conversation_history=session.conversation_history
     )
 
-@app.put("/llm/bots/{bot_id}")
+@app.put("/api/bots/{bot_id}")
 async def update_bot(bot_id: str, update_data: Dict):
     """
     Update bot configuration
@@ -158,7 +158,7 @@ async def update_bot(bot_id: str, update_data: Dict):
     await bot_factory.update_bot_config(bot_id, update_data)
     return {"message": "Bot configuration updated successfully"}
 
-@app.get("/llm/available_bots")
+@app.get("/api/available_bots")
 async def get_available_bots():
     """
     Get list of available active bots
@@ -168,7 +168,7 @@ async def get_available_bots():
     print(list(bot_factory.bots.keys()),bot_factory.bots)
     return list(bot_factory.bots.keys())
 
-@app.post("/llm/createBot")
+@app.post("/api/createBot")
 async def createBot(
     bot_name: str=Form(default=None),
     bot_description: str=Form(default=None),
@@ -195,7 +195,7 @@ async def createBot(
     await bot_factory.initialize_bots()
     return bot_
     
-@app.post("/llm/createBotAnalyser")
+@app.post("/api/createBotAnalyser")
 async def createBotAnalyser(
     bot_name: str=Form(default=None),
     bot_description: str=Form(default=None),
@@ -218,7 +218,7 @@ async def createBotAnalyser(
     return bot_
     
     
-@app.get("/llm/sessionAnalyser/{session_id}")
+@app.get("/api/sessionAnalyser/{session_id}")
     
 async def get_session_analysis(
     session_id: str,
@@ -248,7 +248,7 @@ async def get_session_analysis(
     return analysis
 
     
-@app.get("/llm/refreshBots")
+@app.get("/api/refreshBots")
 async def refresh_bots():
     await bot_factory.initialize_bots()
     await bot_factory_analyser.initialize_bots_analyser()
