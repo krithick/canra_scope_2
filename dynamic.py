@@ -774,3 +774,48 @@ async def refresh_question_bots():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error refreshing bots: {str(e)}")
+
+@app.get("/api/question-sessions/{session_id}/analysis")
+async def analyze_question_session(
+    session_id: str,
+    db: MongoDB = Depends(get_db)
+):
+    """Analyze completed question session performance"""
+    try:
+        # Check if analysis already exists
+        existing_analysis = await db.question_analysis.find_one({"session_id": session_id})
+        if existing_analysis:
+            return {
+                "success": True,
+                "data": existing_analysis
+            }
+        
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        if not session.is_completed:
+            raise HTTPException(status_code=400, detail="Session not completed yet")
+        
+        # Get scenario for competency framework
+        scenario = await db.question_scenarios.find_one({"scenario_name": session.scenario_name})
+        if not scenario:
+            raise HTTPException(status_code=404, detail="Scenario not found")
+        
+        # Create analysis using question bot
+        bot = await bot_factory.get_bot(session.scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Invalid bot type")
+        
+        analysis = await bot.analyze_session_performance(session, scenario.get('competency_framework', []))
+        
+        # Save analysis to database
+        await db.question_analysis.insert_one(analysis)
+        
+        return {
+            "success": True,
+            "data": analysis
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing session: {str(e)}")

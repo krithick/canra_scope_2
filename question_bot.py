@@ -187,6 +187,8 @@ class QuestionBot(BaseLLMBot):
                 return {
                     "is_correct": False,
                     "feedback": feedback,
+                    "user_answer": user_answer,
+                    
                     "correct_answer": paraphrased_q['correct_answer'],
                     "correct_answer_text": correct_option_text,
                     "awaiting_explanation": False,
@@ -558,6 +560,85 @@ Return ONLY JSON:
             insights.append(f"Focus on areas where you answered incorrectly ({incorrect_count} questions).")
             
         return insights
+
+    async def analyze_session_performance(self, session, competency_framework: List[str]) -> Dict:
+        """Analyze session performance using AI with competency framework"""
+        try:
+            # Create analysis prompt
+            prompt = f"""
+Analyze this question training session performance:
+
+SCENARIO: {session.scenario_name}
+SCORE: {session.score}/{session.total_questions}
+COMPETENCY FRAMEWORK: {', '.join(competency_framework)}
+
+QUESTION ATTEMPTS:
+{self._format_attempts_for_analysis(session.question_attempts)}
+
+Evaluate performance on:
+1. DEFAULT COMPETENCIES: Communication, Problem-solving, Critical thinking, Decision-making
+2. SCENARIO COMPETENCIES: {', '.join(competency_framework)}
+
+Return ONLY JSON:
+{{
+    "overall_score": number (0-100),
+    "competency_scores": {{
+        "communication": number (0-100),
+        "problem_solving": number (0-100),
+        "critical_thinking": number (0-100),
+        "decision_making": number (0-100){', ' + ', '.join([f'"{comp.lower().replace(" ", "_")}": number (0-100)' for comp in competency_framework]) if competency_framework else ''}
+    }},
+    "strengths": ["strength1", "strength2"],
+    "areas_for_improvement": ["area1", "area2"],
+    "recommendations": ["rec1", "rec2"]
+}}
+"""
+            
+            contents = [
+                types.Content(
+                    role="user",
+                    parts=[types.Part.from_text(text=prompt)]
+                )
+            ]
+            
+            response = await self.model.aio.models.generate_content(
+                model=self.llm_model,
+                contents=contents,
+            )
+            
+            response_text = response.text.strip().replace('```json', '').replace('```', '').strip()
+            analysis = json.loads(response_text)
+            
+            # Add metadata
+            analysis['_id'] = str(uuid.uuid4())
+            analysis['session_id'] = session.session_id
+            analysis['scenario_name'] = session.scenario_name
+            analysis['analysis_timestamp'] = datetime.now().isoformat()
+            
+            return analysis
+            
+        except Exception as e:
+            print(f"Error analyzing session: {e}")
+            return {
+                "overall_score": (session.score / session.total_questions * 100) if session.total_questions > 0 else 0,
+                "competency_scores": {},
+                "strengths": ["Completed the training session"],
+                "areas_for_improvement": ["Continue practicing"],
+                "recommendations": ["Review incorrect answers"]
+            }
+    
+    def _format_attempts_for_analysis(self, attempts: List[Dict]) -> str:
+        """Format attempts for AI analysis"""
+        formatted = []
+        for i, attempt in enumerate(attempts, 1):
+            q_text = attempt.get('paraphrased_question', {}).get('question_text', 'N/A')
+            user_answer = attempt.get('user_answer', 'N/A')
+            is_correct = attempt.get('is_correct', False)
+            explanation = attempt.get('user_explanation', 'No explanation provided')
+            
+            formatted.append(f"Q{i}: {q_text}\nAnswer: {user_answer} ({'Correct' if is_correct else 'Incorrect'})\nExplanation: {explanation}\n")
+        
+        return '\n'.join(formatted)
 
     async def _extract_option_from_speech(self, speech_text: str, question_data: Dict) -> Optional[str]:
         """Extract A/B/C/D option from speech using LLM"""
