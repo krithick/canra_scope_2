@@ -546,6 +546,7 @@ async def submit_question_answer(
     user_input: str = Form(..., description="Speech text or option letter"),
     time_taken: int = Form(default=30, description="Time taken in seconds"),
     is_timeout: bool = Form(default=False, description="Whether this is a timeout submission"),
+    retry_count: int = Form(default=0, description="Number of retries attempted"),
     db: MongoDB = Depends(get_db)
 ):
     """Submit answer to current question (speech or timeout)"""
@@ -559,9 +560,9 @@ async def submit_question_answer(
         bot = await bot_factory.get_bot(session.scenario_name)
         if not isinstance(bot, QuestionBot):
             raise HTTPException(status_code=400, detail="Invalid bot type")
-        
+        print(retry_count,"retry_count - api")
         # Submit answer through bot
-        result = await bot.submit_answer(session_id, user_input, time_taken, is_timeout)
+        result = await bot.submit_answer(session_id, user_input, time_taken, is_timeout, retry_count)
         
         return {
             "success": True,
@@ -590,7 +591,7 @@ async def handle_question_timeout(
             raise HTTPException(status_code=400, detail="Invalid bot type")
         
         # Handle timeout through bot
-        result = await bot.submit_answer(session_id, "", time_taken, is_timeout=True)
+        result = await bot.submit_answer(session_id, "", time_taken, is_timeout=True, retry_count=0)
         
         return {
             "success": True,

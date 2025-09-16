@@ -76,7 +76,7 @@ class QuestionBot(BaseLLMBot):
         except Exception as e:
             raise Exception(f"Error starting session: {str(e)}")
 
-    async def submit_answer(self, session_id: str, user_input: str, time_taken: int = 30, is_timeout: bool = False) -> Dict:
+    async def submit_answer(self, session_id: str, user_input: str, time_taken: int = 30, is_timeout: bool = False, retry_count: int = 0) -> Dict:
         """
         API: POST /api/question-sessions/{session_id}/answer
         Processes answer submission (speech or timeout)
@@ -97,19 +97,26 @@ class QuestionBot(BaseLLMBot):
             
             # Handle timeout case
             if is_timeout:
-                return await self._handle_timeout(session, current_q_original, paraphrased_q, time_taken, db)
+                return await self._handle_timeout_or_invalid(session, current_q_original, paraphrased_q, time_taken, db, "timeout")
             
             # Process speech input to extract option
             user_answer = await self._extract_option_from_speech(user_input, paraphrased_q)
             
             if not user_answer:
+                print(retry_count,"retry_count - could not extract answer")
+                # Check retry limit (max 1 retry)
+                if retry_count >= 1:
+                    return await self._handle_timeout_or_invalid(session, current_q_original, paraphrased_q, time_taken, db, "invalid")
+                
+                feedback_msg = "I couldn't understand which option you selected. Please clearly state A, B, C, or D, or mention the option text."
                 return {
                     "is_valid_answer": False,
-                    "feedback": "I couldn't understand which option you selected. Please clearly state A, B, C, or D, or mention the option text.",
+                    "feedback": feedback_msg,
                     "current_score": session.score,
                     "question_number": session.current_question_index + 1,
                     "total_questions": session.total_questions,
-                    "retry_allowed": True
+                    "retry_allowed": True,
+                    "retry_count": retry_count + 1
                 }
             
             # Check correctness
@@ -567,7 +574,9 @@ Extract which option (A, B, C, or D) the user selected. They might say:
 - Option text: part of the actual option content
 - Descriptive: "first one", "second option", etc.
 
-Return ONLY the letter (A, B, C, or D) or "INVALID" if unclear."""
+If the user's input is completely unrelated to the question (like asking about weather, food, etc.), return "IRRELEVANT".
+If unclear but seems question-related, return "UNCLEAR".
+Otherwise return ONLY the letter (A, B, C, or D)."""
             
             contents = [
                 types.Content(
@@ -582,27 +591,41 @@ Return ONLY the letter (A, B, C, or D) or "INVALID" if unclear."""
             )
             
             extracted = response.text.strip().upper()
-            return extracted if extracted in ['A', 'B', 'C', 'D'] else None
+            if extracted in ['A', 'B', 'C', 'D']:
+                return extracted
+            elif extracted in ['IRRELEVANT', 'UNCLEAR']:
+                return None  # Will trigger retry or timeout
+            else:
+                return None
             
         except Exception as e:
             print(f"Error extracting option from speech: {e}")
             return None
 
-    async def _handle_timeout(self, session, current_q_original: Dict, paraphrased_q: Dict, time_taken: int, db) -> Dict:
-        """Handle timeout scenario - show correct answer and move to next"""
+    async def _handle_timeout_or_invalid(self, session, current_q_original: Dict, paraphrased_q: Dict, time_taken: int, db, reason: str = "timeout") -> Dict:
+        """Handle timeout or invalid answer scenario - show correct answer and move to next"""
         try:
             correct_option_text = next(
                 opt['text'] for opt in paraphrased_q['options'] 
                 if opt['option_id'] == paraphrased_q['correct_answer']
             )
             
-            # Create timeout attempt record
+            # Create attempt record based on reason
+            if reason == "timeout":
+                user_answer = "TIMEOUT"
+                user_answer_text = "No answer provided (timeout)"
+                feedback = f"Time's up! The correct answer was {paraphrased_q['correct_answer']}: \"{correct_option_text}\""
+            else:  # irrelevant or invalid
+                user_answer = "INVALID"
+                user_answer_text = "Invalid or irrelevant answer"
+                feedback = f"Your answer was not relevant to the question. The correct answer was {paraphrased_q['correct_answer']}: \"{correct_option_text}\""
+            
             attempt = QuestionAttemptRecord(
                 question_id=current_q_original['id'],
                 original_question=current_q_original,
                 paraphrased_question=paraphrased_q,
-                user_answer="TIMEOUT",
-                user_answer_text="No answer provided (timeout)",
+                user_answer=user_answer,
+                user_answer_text=user_answer_text,
                 correct_answer_original=current_q_original['correct_answer'],
                 correct_answer_paraphrased=paraphrased_q['correct_answer'],
                 is_correct=False,
@@ -629,8 +652,9 @@ Return ONLY the letter (A, B, C, or D) or "INVALID" if unclear."""
                 next_question = session.paraphrased_questions_used[session.current_question_index]
             
             return {
-                "is_timeout": True,
-                "feedback": f"Time's up! The correct answer was {paraphrased_q['correct_answer']}: \"{correct_option_text}\"",
+                "is_timeout": reason == "timeout",
+                "is_invalid": reason != "timeout",
+                "feedback": feedback,
                 "correct_answer": paraphrased_q['correct_answer'],
                 "correct_answer_text": correct_option_text,
                 "awaiting_explanation": False,
@@ -642,7 +666,7 @@ Return ONLY the letter (A, B, C, or D) or "INVALID" if unclear."""
             }
             
         except Exception as e:
-            raise Exception(f"Error handling timeout: {str(e)}")
+            raise Exception(f"Error handling {reason}: {str(e)}")
 
     def _get_paraphrasing_prompt(self, difficulty: str) -> str:
         """Get prompt for question paraphrasing"""
