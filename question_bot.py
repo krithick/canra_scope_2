@@ -38,13 +38,14 @@ class QuestionBot(BaseLLMBot):
         Creates new training session with first question
         """
         try:
-            # Filter questions by difficulty
-            filtered_questions = self._filter_questions_by_difficulty(difficulty)
-            if not filtered_questions:
-                raise Exception("No questions available for this difficulty")
-
-            # Generate paraphrased questions concurrently
-            paraphrased_questions = await self._generate_all_paraphrases(filtered_questions, difficulty)
+            # Get random paraphrased questions from pre-generated pool
+            paraphrased_questions = await self._get_random_paraphrased_questions(difficulty, 15)
+            
+            if not paraphrased_questions:
+                raise Exception("No questions available for this difficulty. Please generate questions first.")
+            
+            # Use paraphrased questions as the base questions too
+            filtered_questions = paraphrased_questions
             
             # Create session
             session = QuestionSession(
@@ -353,8 +354,72 @@ class QuestionBot(BaseLLMBot):
             
         return filtered
 
+    async def _get_random_paraphrased_questions(self, difficulty: str, count: int = 15) -> List[Dict]:
+        """Get random paraphrased questions from pre-generated pool"""
+        try:
+            db = await self._get_db()
+            
+            # Get random sample from pre-generated questions
+            pipeline = [
+                {"$match": {
+                    "scenario_name": self.bot_description,
+                    "difficulty": difficulty,
+                    "is_active": True
+                }},
+                {"$sample": {"size": count}}
+            ]
+            
+            cached_questions = await db.paraphrased_questions.aggregate(pipeline).to_list(length=None)
+            
+            if len(cached_questions) < count:
+                print(f"Warning: Only {len(cached_questions)} questions available, need {count}")
+            
+            # Shuffle options for each question
+            shuffled_questions = []
+            for cached in cached_questions:
+                question_data = cached["paraphrased_data"]
+                shuffled_question = self._shuffle_question_options(question_data)
+                shuffled_questions.append(shuffled_question)
+            
+            return shuffled_questions
+            
+        except Exception as e:
+            print(f"Error getting random questions: {e}")
+            # Fallback to original method if needed
+            return await self._generate_all_paraphrases(self.scenario_questions[:count], difficulty)
+
+    def _shuffle_question_options(self, question_data: Dict) -> Dict:
+        """Shuffle options and update correct answer"""
+        import random
+        
+        options = question_data["options"].copy()
+        correct_answer = question_data["correct_answer"]
+        
+        # Find correct option text
+        correct_text = next(opt["text"] for opt in options if opt["option_id"] == correct_answer)
+        
+        # Shuffle option texts
+        option_texts = [opt["text"] for opt in options]
+        random.shuffle(option_texts)
+        
+        # Reassign to A, B, C, D and find new correct answer
+        new_options = []
+        new_correct_answer = None
+        
+        for i, text in enumerate(option_texts):
+            option_id = chr(65 + i)  # A, B, C, D
+            new_options.append({"option_id": option_id, "text": text})
+            if text == correct_text:
+                new_correct_answer = option_id
+        
+        return {
+            **question_data,
+            "options": new_options,
+            "correct_answer": new_correct_answer
+        }
+
     async def _generate_all_paraphrases(self, questions: List[Dict], difficulty: str) -> List[Dict]:
-        """Generate paraphrases for all questions concurrently"""
+        """Generate paraphrases for all questions concurrently (fallback method)"""
         async def paraphrase_single(question):
             return await self._paraphrase_with_llm(question, difficulty)
         
@@ -370,6 +435,84 @@ class QuestionBot(BaseLLMBot):
                 paraphrased.append(result)
         
         return paraphrased
+
+    async def generate_bulk_questions_from_scenario(self, scenario_context: str, difficulty: str, batch_size: int = 5, variation_hint: str = "") -> List[Dict]:
+        """Generate questions using the dynamic prompt"""
+        
+        if difficulty == "easy":
+            prompt_template = """Generate 10 leadership scenario questions based on the following scenario - EASY difficulty level.
+
+SCENARIO:
+{scenario_context}
+
+VARIATION INSTRUCTION: {variation_hint}
+
+REQUIREMENTS:
+- Questions should test basic leadership, communication, and problem-solving skills
+- Each question: 2-3 sentences describing a realistic workplace situation related to the scenario
+- 4 options per question: 1-2 sentences each, all plausible but only 1 clearly correct
+- Focus on fundamental principles: active listening, empathy, clear communication, basic conflict resolution
+- Easy questions should have obvious correct answers for someone with basic leadership knowledge
+
+OUTPUT FORMAT - Return ONLY a valid JSON array with this structure:
+[{{"id": "easy_q1", "question_number": 1, "question_text": "...", "options": [{{"option_id": "A", "text": "..."}}, {{"option_id": "B", "text": "..."}}, {{"option_id": "C", "text": "..."}}, {{"option_id": "D", "text": "..."}}], "correct_answer": "A", "explanation_correct": "...", "explanations_incorrect": {{"B": "...", "C": "...", "D": "..."}}, "competencies_tested": ["leadership", "communication"], "category": "immediate_response", "source_difficulty": "easy"}}]
+
+Generate 5 questions covering: initial response, communication techniques, de-escalation, fact-finding, solution implementation."""
+        
+        else:  # hard
+            prompt_template = """Generate 10 leadership scenario questions based on the following scenario - HARD difficulty level.
+
+SCENARIO:
+{scenario_context}
+
+VARIATION INSTRUCTION: {variation_hint}
+
+REQUIREMENTS:
+- Questions should test advanced leadership, strategic thinking, and complex problem-solving skills
+- Each question: 2-3 sentences describing nuanced workplace situations with multiple stakeholders
+- 4 options per question: 1-2 sentences each, all sophisticated and plausible, requiring deep analysis
+- Focus on advanced principles: systemic thinking, organizational impact, long-term consequences, stakeholder management
+- Hard questions should require expert-level leadership knowledge to identify the best answer
+
+OUTPUT FORMAT - Return ONLY a valid JSON array with this structure:
+[{{"id": "hard_q1", "question_number": 1, "question_text": "...", "options": [{{"option_id": "A", "text": "..."}}, {{"option_id": "B", "text": "..."}}, {{"option_id": "C", "text": "..."}}, {{"option_id": "D", "text": "..."}}], "correct_answer": "A", "explanation_correct": "...", "explanations_incorrect": {{"B": "...", "C": "...", "D": "..."}}, "competencies_tested": ["strategic_thinking", "process_improvement"], "category": "systemic_resolution", "source_difficulty": "hard"}}]
+
+Generate 5 questions covering: organizational impact, strategic decisions, process optimization, risk management, advanced leadership challenges."""
+
+        prompt = prompt_template.format(scenario_context=scenario_context, variation_hint=variation_hint)
+        
+        contents = [types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
+        
+        # Add generation config for better JSON output
+        config = types.GenerateContentConfig(
+            temperature=0.3,  # Lower temperature for more consistent JSON
+            max_output_tokens=8000,
+            candidate_count=1
+        )
+        
+        response = await self.model.aio.models.generate_content(
+            model=self.llm_model,
+            contents=contents,
+            config=config
+        )
+        
+        response_text = response.text.strip().replace('```json', '').replace('```', '').strip()
+        
+        # Clean common JSON issues
+        response_text = response_text.replace('\n', ' ').replace('\r', '')
+        response_text = re.sub(r'\s+', ' ', response_text)  # Multiple spaces to single
+        
+        # Try to extract JSON array if wrapped in other text
+        json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+        if json_match:
+            response_text = json_match.group(0)
+        
+        try:
+            return json.loads(response_text)
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing failed: {e}")
+            print(f"Response text: {response_text[:500]}...")
+            raise Exception(f"AI generated invalid JSON: {str(e)}")
 
     async def _paraphrase_with_llm(self, original_question: Dict, difficulty: str) -> Dict:
         """Generate paraphrased question using LLM"""

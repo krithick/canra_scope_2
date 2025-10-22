@@ -435,6 +435,140 @@ async def get_scenario_questions(
 
 # ===== PARAPHRASING MANAGEMENT =====
 
+@app.delete("/api/questions/{scenario_name}/clear")
+async def clear_generated_questions(
+    scenario_name: str,
+    difficulty: str = "all",
+    db: MongoDB = Depends(get_db)
+):
+    """Clear generated questions for testing"""
+    try:
+        if difficulty == "all":
+            result = await db.paraphrased_questions.delete_many({"scenario_name": scenario_name})
+        else:
+            result = await db.paraphrased_questions.delete_many({
+                "scenario_name": scenario_name,
+                "difficulty": difficulty
+            })
+        
+        return {
+            "message": f"Cleared {result.deleted_count} questions",
+            "deleted_count": result.deleted_count
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing questions: {str(e)}")
+
+@app.post("/api/question-scenarios/{scenario_name}/generate-bulk-questions")
+async def generate_bulk_questions(
+    scenario_name: str,
+    difficulty: str = Form(..., description="easy or hard"),
+    target_count: int = Form(default=100, description="Number of questions to generate"),
+    force_regenerate: bool = Form(default=False),
+    db: MongoDB = Depends(get_db)
+):
+    """Generate 100 new questions from scenario context"""
+    try:
+        # Get scenario context
+        scenario = await db.question_scenarios.find_one({"scenario_name": scenario_name})
+        if not scenario:
+            raise HTTPException(status_code=404, detail="Scenario not found")
+        
+        scenario_context = scenario.get("scenario_context", "")
+        if not scenario_context:
+            raise HTTPException(status_code=400, detail="Scenario context required for question generation")
+        
+        bot = await bot_factory.get_bot(scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Invalid bot type")
+        
+        # Clear existing if force regenerate
+        if force_regenerate:
+            await db.paraphrased_questions.delete_many({
+                "scenario_name": scenario_name,
+                "difficulty": difficulty
+            })
+        
+        # Check existing count
+        existing_count = await db.paraphrased_questions.count_documents({
+            "scenario_name": scenario_name,
+            "difficulty": difficulty,
+            "is_active": True
+        })
+        
+        if existing_count >= target_count and not force_regenerate:
+            return {
+                "message": f"Already have {existing_count} questions for {difficulty} mode",
+                "existing_count": existing_count,
+                "target_count": target_count
+            }
+        
+        generated_count = 0
+        errors = []
+        questions_to_generate = target_count - existing_count
+        
+        # Generate in batches of 10 (balance between speed and reliability)
+        batch_size = 10
+        batches_needed = (questions_to_generate + batch_size - 1) // batch_size
+        
+        for batch_num in range(batches_needed):
+            try:
+                questions_in_batch = min(batch_size, questions_to_generate - generated_count)
+                if questions_in_batch <= 0:
+                    break
+                
+                # Generate batch of questions with variation instruction
+                variation_prompt = f"Focus on batch {batch_num + 1}/10 - ensure unique questions different from previous batches. Vary the situations, stakeholders, and decision points."
+                batch_questions = await bot.generate_bulk_questions_from_scenario(
+                    scenario_context, difficulty, questions_in_batch, variation_prompt
+                )
+                
+                # Save each question
+                for i, question in enumerate(batch_questions):
+                    try:
+                        # Update question ID to be unique
+                        question_id = f"{difficulty}_q{generated_count + i + 1}"
+                        question["id"] = question_id
+                        question["question_number"] = generated_count + i + 1
+                        
+                        # Save to database
+                        cache_doc = ParaphrasedQuestionCache(
+                            id=question_id,
+                            original_question_id=question_id,
+                            scenario_name=scenario_name,
+                            difficulty=difficulty,
+                            paraphrased_data=question
+                        )
+                        
+                        result = await db.paraphrased_questions.insert_one(cache_doc.dict())
+                        if result.inserted_id:
+                            generated_count += 1
+                            print(f"Saved question {question_id} to database")
+                        else:
+                            print(f"Failed to save question {question_id}")
+                        
+                    except Exception as e:
+                        errors.append(f"Question {generated_count + i + 1}: {str(e)}")
+                
+                print(f"Generated batch {batch_num + 1}/{batches_needed}: {len(batch_questions)} questions")
+                
+            except Exception as e:
+                errors.append(f"Batch {batch_num + 1}: {str(e)}")
+        
+        return {
+            "scenario_name": scenario_name,
+            "difficulty": difficulty,
+            "generated_count": generated_count,
+            "existing_count": existing_count,
+            "total_count": existing_count + generated_count,
+            "target_count": target_count,
+            "batches_processed": batches_needed,
+            "errors": errors[:5]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating bulk questions: {str(e)}")
+
 @app.post("/api/question-scenarios/{scenario_name}/generate-paraphrases")
 async def generate_all_paraphrases(
     scenario_name: str,
@@ -442,53 +576,8 @@ async def generate_all_paraphrases(
     force_regenerate: bool = Form(default=False),
     db: MongoDB = Depends(get_db)
 ):
-    """Generate paraphrased versions for all questions in a scenario"""
-    try:
-        bot = await bot_factory.get_bot(scenario_name)
-        if not hasattr(bot, '_paraphrase_with_llm'):
-            raise HTTPException(status_code=400, detail="Bot doesn't support question paraphrasing")
-        
-        generated_count = 0
-        errors = []
-        
-        for question in bot.scenario_questions:
-            try:
-                # Check if exists
-                if not force_regenerate:
-                    existing = await db.paraphrased_questions.find_one({
-                        "original_question_id": question["id"],
-                        "scenario_name": scenario_name,
-                        "difficulty": difficulty
-                    })
-                    if existing:
-                        continue
-                
-                # Generate paraphrase
-                paraphrased = await bot._paraphrase_with_llm(question, difficulty)
-                
-                # Save to cache
-                cache_doc = ParaphrasedQuestionCache(
-                    original_question_id=question["id"],
-                    scenario_name=scenario_name,
-                    difficulty=difficulty,
-                    paraphrased_data=paraphrased
-                )
-                await db.paraphrased_questions.insert_one(cache_doc.dict())
-                generated_count += 1
-                
-            except Exception as e:
-                errors.append(f"Question {question['id']}: {str(e)}")
-        
-        return {
-            "scenario_name": scenario_name,
-            "difficulty": difficulty,
-            "generated_count": generated_count,
-            "total_questions": len(bot.scenario_questions),
-            "errors": errors
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating paraphrases: {str(e)}")
+    """Generate paraphrased versions for all questions in a scenario (legacy method)"""
+    return await generate_bulk_questions(scenario_name, difficulty, 20, force_regenerate, db)
 
 @app.get("/api/questions/{scenario_name}/paraphrases")
 async def get_scenario_paraphrases(
@@ -504,14 +593,69 @@ async def get_scenario_paraphrases(
             "is_active": True
         }).to_list(length=None)
         
+        # Convert ObjectId to string
+        for p in paraphrases:
+            if '_id' in p:
+                p['_id'] = str(p['_id'])
+        
         return {
             "scenario_name": scenario_name,
             "difficulty": difficulty,
+            "count": len(paraphrases),
             "paraphrases": paraphrases
         }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting paraphrases: {str(e)}")
+
+@app.get("/api/debug/questions/{scenario_name}")
+async def debug_questions(
+    scenario_name: str,
+    db: MongoDB = Depends(get_db)
+):
+    """Debug endpoint to check what's in the database"""
+    try:
+        easy_count = await db.paraphrased_questions.count_documents({
+            "scenario_name": scenario_name,
+            "difficulty": "easy",
+            "is_active": True
+        })
+        
+        hard_count = await db.paraphrased_questions.count_documents({
+            "scenario_name": scenario_name,
+            "difficulty": "hard",
+            "is_active": True
+        })
+        
+        # Get sample questions
+        easy_samples = await db.paraphrased_questions.find({
+            "scenario_name": scenario_name,
+            "difficulty": "easy",
+            "is_active": True
+        }).limit(3).to_list(length=None)
+        
+        hard_samples = await db.paraphrased_questions.find({
+            "scenario_name": scenario_name,
+            "difficulty": "hard",
+            "is_active": True
+        }).limit(3).to_list(length=None)
+        
+        # Convert ObjectIds
+        for samples in [easy_samples, hard_samples]:
+            for s in samples:
+                if '_id' in s:
+                    s['_id'] = str(s['_id'])
+        
+        return {
+            "scenario_name": scenario_name,
+            "easy_count": easy_count,
+            "hard_count": hard_count,
+            "easy_samples": [q.get("paraphrased_data", {}).get("question_text", "No text")[:100] for q in easy_samples],
+            "hard_samples": [q.get("paraphrased_data", {}).get("question_text", "No text")[:100] for q in hard_samples]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Debug error: {str(e)}")
 
 # ===== CORE QUESTION SESSION APIS =====
 
@@ -657,6 +801,38 @@ async def get_session_final_results(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting results: {str(e)}")
+
+@app.get("/api/question-sessions/{session_id}/all-questions")
+async def get_all_session_questions(
+    session_id: str,
+    db: MongoDB = Depends(get_db)
+):
+    """Get all 15 questions from a session for testing"""
+    try:
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Return all paraphrased questions used in this session
+        questions = session.paraphrased_questions_used
+        
+        # Clean ObjectIds
+        for q in questions:
+            if '_id' in q:
+                q['_id'] = str(q['_id'])
+        
+        return {
+            "session_id": session_id,
+            "total_questions": len(questions),
+            "questions": [{
+                "id": q["id"],
+                "question_text": q["question_text"][:100] + "...",
+                "correct_answer": q["correct_answer"]
+            } for q in questions]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting session questions: {str(e)}")
 
 @app.get("/api/question-sessions/{session_id}/status")
 async def get_session_status(
