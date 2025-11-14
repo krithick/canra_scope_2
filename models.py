@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, Form, UploadFile, File
 import uuid
+from io import BytesIO
 # FastAPI Models
 class Message(BaseModel):
     role: str
@@ -160,3 +161,31 @@ class QuestionSession(BaseModel):
     is_completed: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
     last_updated: datetime = Field(default_factory=datetime.now)
+
+# STT Models
+class STTRequest(BaseModel):
+    """Request model for speech-to-text conversion"""
+    language_code: str = "en-US"
+    sample_rate_hertz: int = 16000
+    encoding: str = "WEBM_OPUS"  # WEBM_OPUS, LINEAR16, FLAC, etc.
+    enable_automatic_punctuation: bool = True
+    enable_word_time_offsets: bool = False
+    model: str = "latest_long"  # latest_long, latest_short, command_and_search
+
+class STTResponse(BaseModel):
+    """Response model for speech-to-text conversion"""
+    transcript: str
+    confidence: float
+    language_code: str
+    processing_time_ms: int
+    word_count: int
+    alternatives: List[Dict] = []
+    
+class STTStreamRequest(BaseModel):
+    """Request model for streaming speech-to-text"""
+    language_code: str = "en-US"
+    sample_rate_hertz: int = 16000
+    encoding: str = "WEBM_OPUS"
+    enable_automatic_punctuation: bool = True
+    interim_results: bool = True
+    single_utterance: bool = False

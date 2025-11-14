@@ -26,8 +26,9 @@ from mongo import MongoDB
 from factory import DynamicBotFactory
 from models import (
     Message, ChatSession, ChatResponse, ChatReport, BotConfig, BotConfigAnalyser,
-    QuestionScenarioDoc, ParaphrasedQuestionCache, QuestionSession)
+    QuestionScenarioDoc, ParaphrasedQuestionCache, QuestionSession, STTRequest, STTResponse)
 from question_bot import QuestionBot
+from stt_service import GoogleSTTService
 load_dotenv('.env')
 # MongoDB configuration
 MONGO_URL = os.getenv("MONGO_URL")
@@ -64,6 +65,9 @@ bot_factory_analyser = DynamicBotFactory(
     mongodb_uri=os.getenv("MONGO_URL"), 
     database_name=os.getenv("DATABASE_NAME")
 )
+
+# Initialize STT service
+stt_service = GoogleSTTService(credentials_path=os.getenv("GOOGLE_CREDENTIALS_PATH"))
 
 @app.on_event("startup")
 async def startup_event():
@@ -995,3 +999,199 @@ async def analyze_question_session(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error analyzing session: {str(e)}")
+
+# ===== SPEECH-TO-TEXT API ENDPOINTS =====
+
+@app.post("/api/stt/transcribe", response_model=STTResponse)
+async def transcribe_audio(
+    audio_file: UploadFile = File(..., description="Audio file to transcribe"),
+    language_code: str = Form(default="en-US", description="Language code (e.g., en-US, es-ES)")
+):
+    """Transcribe uploaded audio file to text using Google STT"""
+    try:
+        # Read audio content
+        audio_content = await audio_file.read()
+        print(f"Audio file size: {len(audio_content)} bytes")
+        
+        # Create STT request config with defaults
+        stt_config = STTRequest(
+            language_code=language_code,
+            sample_rate_hertz=16000,
+            encoding="LINEAR16",
+            enable_automatic_punctuation=True,
+            enable_word_time_offsets=False,
+            model="latest_long"
+        )
+        
+        # Determine if we should use long-running operation based on file size
+        # Files larger than 10MB or longer than 1 minute should use long-running
+        if len(audio_content) > 10 * 1024 * 1024:  # 10MB
+            result = await stt_service.transcribe_long_audio(audio_content, stt_config)
+        else:
+            result = await stt_service.transcribe_audio(audio_content, stt_config)
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Transcription error: {str(e)}")
+
+@app.post("/api/stt/transcribe-base64", response_model=STTResponse)
+async def transcribe_base64_audio(
+    audio_base64: str = Form(..., description="Base64 encoded audio data"),
+    language_code: str = Form(default="en-US"),
+    sample_rate_hertz: int = Form(default=16000),
+    encoding: str = Form(default="WEBM_OPUS"),
+    enable_automatic_punctuation: bool = Form(default=True),
+    model: str = Form(default="latest_long")
+):
+    """Transcribe base64 encoded audio to text"""
+    try:
+        # Decode base64 audio
+        audio_content = base64.b64decode(audio_base64)
+        
+        # Create STT request config
+        stt_config = STTRequest(
+            language_code=language_code,
+            sample_rate_hertz=sample_rate_hertz,
+            encoding=encoding,
+            enable_automatic_punctuation=enable_automatic_punctuation,
+            model=model
+        )
+        
+        # Transcribe audio
+        result = await stt_service.transcribe_audio(audio_content, stt_config)
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Base64 transcription error: {str(e)}")
+
+@app.get("/api/stt/supported-languages")
+async def get_supported_languages():
+    """Get list of supported languages for STT"""
+    try:
+        languages = stt_service.get_supported_languages()
+        return {
+            "supported_languages": languages,
+            "total_count": len(languages)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting languages: {str(e)}")
+
+@app.get("/api/stt/supported-encodings")
+async def get_supported_encodings():
+    """Get list of supported audio encodings for STT"""
+    try:
+        encodings = stt_service.get_supported_encodings()
+        return {
+            "supported_encodings": encodings,
+            "total_count": len(encodings)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting encodings: {str(e)}")
+
+@app.post("/api/stt/question-answer")
+async def transcribe_question_answer(
+    session_id: str = Form(..., description="Question session ID"),
+    audio_file: UploadFile = File(..., description="Audio file with user's answer"),
+    language_code: str = Form(default="en-US"),
+    time_taken: int = Form(default=30, description="Time taken to answer in seconds")
+):
+    """Transcribe audio answer and submit to question session"""
+    try:
+        # Read and transcribe audio
+        audio_content = await audio_file.read()
+        
+        stt_config = STTRequest(
+            language_code=language_code,
+            sample_rate_hertz=16000,
+            encoding="WEBM_OPUS",
+            enable_automatic_punctuation=True,
+            model="latest_short"  # Use short model for quick responses
+        )
+        
+        # Transcribe the audio
+        transcription = await stt_service.transcribe_audio(audio_content, stt_config)
+        
+        # Get session to find the scenario
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get the appropriate bot and submit the transcribed answer
+        bot = await bot_factory.get_bot(session.scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Invalid bot type")
+        
+        # Submit the transcribed text as the answer
+        result = await bot.submit_answer(
+            session_id, 
+            transcription.transcript, 
+            time_taken, 
+            is_timeout=False, 
+            retry_count=0
+        )
+        
+        return {
+            "success": True,
+            "transcription": {
+                "text": transcription.transcript,
+                "confidence": transcription.confidence,
+                "processing_time_ms": transcription.processing_time_ms
+            },
+            "question_result": result
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing audio answer: {str(e)}")
+
+@app.post("/api/stt/explanation")
+async def transcribe_explanation(
+    session_id: str = Form(..., description="Question session ID"),
+    audio_file: UploadFile = File(..., description="Audio file with user's explanation"),
+    language_code: str = Form(default="en-US")
+):
+    """Transcribe audio explanation and submit to question session"""
+    try:
+        # Read and transcribe audio
+        audio_content = await audio_file.read()
+        
+        stt_config = STTRequest(
+            language_code=language_code,
+            sample_rate_hertz=16000,
+            encoding="WEBM_OPUS",
+            enable_automatic_punctuation=True,
+            model="latest_long"  # Use long model for detailed explanations
+        )
+        
+        # Transcribe the audio
+        transcription = await stt_service.transcribe_audio(audio_content, stt_config)
+        
+        # Get session to find the scenario
+        session = await db.get_question_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get the appropriate bot and submit the transcribed explanation
+        bot = await bot_factory.get_bot(session.scenario_name)
+        if not isinstance(bot, QuestionBot):
+            raise HTTPException(status_code=400, detail="Invalid bot type")
+        
+        # Submit the transcribed explanation
+        result = await bot.submit_explanation(session_id, transcription.transcript)
+        
+        return {
+            "success": True,
+            "transcription": {
+                "text": transcription.transcript,
+                "confidence": transcription.confidence,
+                "processing_time_ms": transcription.processing_time_ms
+            },
+            "explanation_result": result
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing audio explanation: {str(e)}")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
