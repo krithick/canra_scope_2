@@ -180,6 +180,7 @@ class STTResponse(BaseModel):
     processing_time_ms: int
     word_count: int
     alternatives: List[Dict] = []
+    tracking_session_id: Optional[str] = None
     
 class STTStreamRequest(BaseModel):
     """Request model for streaming speech-to-text"""
