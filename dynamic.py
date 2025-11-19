@@ -6,9 +6,10 @@ from fastapi import FastAPI, HTTPException, Depends
 import importlib
 import inspect
 from fastapi import FastAPI, HTTPException, Depends, Form, UploadFile, File
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel,Field
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import motor.motor_asyncio
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,6 +30,7 @@ from models import (
     QuestionScenarioDoc, ParaphrasedQuestionCache, QuestionSession, STTRequest, STTResponse)
 from question_bot import QuestionBot
 from stt_service import GoogleSTTService
+from stt_tracker import STTTracker
 load_dotenv('.env')
 # MongoDB configuration
 MONGO_URL = os.getenv("MONGO_URL")
@@ -66,8 +68,9 @@ bot_factory_analyser = DynamicBotFactory(
     database_name=os.getenv("DATABASE_NAME")
 )
 
-# Initialize STT service
+# Initialize STT service and tracker
 stt_service = GoogleSTTService(credentials_path=os.getenv("GOOGLE_CREDENTIALS_PATH"))
+stt_tracker = STTTracker(db)
 
 @app.on_event("startup")
 async def startup_event():
@@ -1005,9 +1008,11 @@ async def analyze_question_session(
 @app.post("/api/stt/transcribe", response_model=STTResponse)
 async def transcribe_audio(
     audio_file: UploadFile = File(..., description="Audio file to transcribe"),
-    language_code: str = Form(default="en-US", description="Language code (e.g., en-US, es-ES)")
+    language_code: str = Form(default="en-US", description="Language code (e.g., en-US, es-ES)"),
+    user_id: Optional[str] = Form(default=None, description="Optional user ID for tracking")
 ):
     """Transcribe uploaded audio file to text using Google STT"""
+    audio_content = None
     try:
         # Read audio content
         audio_content = await audio_file.read()
@@ -1030,9 +1035,30 @@ async def transcribe_audio(
         else:
             result = await stt_service.transcribe_audio(audio_content, stt_config)
         
+        # Track successful transcription
+        await stt_tracker.track_transcription(
+            endpoint="/api/stt/transcribe",
+            audio_content=audio_content,
+            config=stt_config.dict(),
+            result=result.dict(),
+            user_id=user_id,
+            success=True
+        )
+        
         return result
         
     except Exception as e:
+        # Track failed transcription
+        if audio_content:
+            await stt_tracker.track_transcription(
+                endpoint="/api/stt/transcribe",
+                audio_content=audio_content,
+                config={"language_code": language_code},
+                result={},
+                user_id=user_id,
+                success=False,
+                error_message=str(e)
+            )
         raise HTTPException(status_code=500, detail=f"Transcription error: {str(e)}")
 
 @app.post("/api/stt/transcribe-base64", response_model=STTResponse)
@@ -1192,6 +1218,113 @@ async def transcribe_explanation(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing audio explanation: {str(e)}")
+
+# ===== STT USAGE TRACKING & REPORTING ENDPOINTS =====
+
+@app.get("/api/stt/usage/summary")
+async def get_stt_usage_summary(
+    days: int = 30,
+    user_id: Optional[str] = None
+):
+    """Get STT usage summary for reporting"""
+    try:
+        start_date = datetime.now() - timedelta(days=days)
+        summary = await stt_tracker.get_usage_summary(
+            start_date=start_date,
+            user_id=user_id
+        )
+        
+        return {
+            "success": True,
+            "data": summary
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting usage summary: {str(e)}")
+
+@app.get("/api/stt/usage/detailed")
+async def get_detailed_stt_usage(
+    days: int = 7,
+    limit: int = 100
+):
+    """Get detailed STT usage records"""
+    try:
+        start_date = datetime.now() - timedelta(days=days)
+        records = await stt_tracker.get_detailed_usage(
+            start_date=start_date,
+            limit=limit
+        )
+        
+        return {
+            "success": True,
+            "total_records": len(records),
+            "data": records
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting detailed usage: {str(e)}")
+
+@app.get("/api/stt/usage/export")
+async def export_stt_usage(
+    days: int = 30,
+    format: str = "json"  # json or csv
+):
+    """Export STT usage data for external reporting"""
+    try:
+        start_date = datetime.now() - timedelta(days=days)
+        
+        if format.lower() == "csv":
+            # Get detailed records for CSV export
+            records = await stt_tracker.get_detailed_usage(
+                start_date=start_date,
+                limit=10000  # Large limit for export
+            )
+            
+            # Convert to CSV format
+            import csv
+            import io
+            
+            output = io.StringIO()
+            if records:
+                writer = csv.DictWriter(output, fieldnames=records[0].keys())
+                writer.writeheader()
+                writer.writerows(records)
+            
+            from fastapi.responses import Response
+            return Response(
+                content=output.getvalue(),
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename=stt_usage_{days}days.csv"}
+            )
+        else:
+            # JSON export with summary
+            summary = await stt_tracker.get_usage_summary(start_date=start_date)
+            records = await stt_tracker.get_detailed_usage(
+                start_date=start_date,
+                limit=1000
+            )
+            
+            return {
+                "export_date": datetime.now().isoformat(),
+                "period_days": days,
+                "summary": summary,
+                "detailed_records": records
+            }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error exporting usage data: {str(e)}")
+
+@app.get("/api/stt/dashboard", response_class=HTMLResponse)
+async def stt_dashboard():
+    """Serve STT usage dashboard"""
+    try:
+        with open("stt_dashboard.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<h1>Dashboard not found</h1><p>Please ensure stt_dashboard.html exists in the project directory.</p>",
+            status_code=404
+        )
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

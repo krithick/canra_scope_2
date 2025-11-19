@@ -34,6 +34,7 @@ class MongoDB:
         self.bot_configs=self.db.bot_configs
         self.bot_configs_analyser=self.db.bot_configs_analyser
         self.question_analysis=self.db.question_analysis
+        self.stt_usage = self.db.stt_usage  # STT tracking collection
         # self.question_scenarios = self.db.question_scenarios
         # self.question_chat_sessions = self.db.question_chat_sessions  
         # self.paraphrased_questions = self.db.paraphrased_questions
