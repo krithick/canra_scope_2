@@ -1009,7 +1009,8 @@ async def analyze_question_session(
 async def transcribe_audio(
     audio_file: UploadFile = File(..., description="Audio file to transcribe"),
     language_code: str = Form(default="en-US", description="Language code (e.g., en-US, es-ES)"),
-    user_id: Optional[str] = Form(default=None, description="Optional user ID for tracking")
+    user_id: Optional[str] = Form(default=None, description="Optional user ID for tracking"),
+    session_id: Optional[str] = Form(default=None, description="Optional session ID for tracking")
 ):
     """Transcribe uploaded audio file to text using Google STT"""
     audio_content = None
@@ -1036,25 +1037,35 @@ async def transcribe_audio(
             result = await stt_service.transcribe_audio(audio_content, stt_config)
         
         # Track successful transcription
+        # Generate temp session_id if none provided (for first message)
+        tracking_session_id = session_id or f"temp_{uuid.uuid4().hex[:8]}"
+        
         await stt_tracker.track_transcription(
             endpoint="/api/stt/transcribe",
             audio_content=audio_content,
             config=stt_config.dict(),
             result=result.dict(),
+            session_id=tracking_session_id,
             user_id=user_id,
             success=True
         )
         
-        return result
+        # Add tracking session ID to response
+        result_dict = result.dict()
+        result_dict['tracking_session_id'] = tracking_session_id
+        return result_dict
         
     except Exception as e:
         # Track failed transcription
         if audio_content:
+            tracking_session_id = session_id or f"temp_{uuid.uuid4().hex[:8]}"
+            
             await stt_tracker.track_transcription(
                 endpoint="/api/stt/transcribe",
                 audio_content=audio_content,
                 config={"language_code": language_code},
                 result={},
+                session_id=tracking_session_id,
                 user_id=user_id,
                 success=False,
                 error_message=str(e)
@@ -1325,6 +1336,53 @@ async def stt_dashboard():
             content="<h1>Dashboard not found</h1><p>Please ensure stt_dashboard.html exists in the project directory.</p>",
             status_code=404
         )
+
+@app.get("/api/stt/dashboard.js")
+async def stt_dashboard_js():
+    """Serve dashboard JavaScript file"""
+    try:
+        with open("stt_dashboard.js", "r", encoding="utf-8") as f:
+            from fastapi.responses import Response
+            return Response(content=f.read(), media_type="application/javascript")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="JavaScript file not found")
+
+@app.get("/api/stt/session/{session_id}")
+async def get_session_stt_usage(session_id: str):
+    """Get STT usage for a specific session"""
+    try:
+        usage_data = await stt_tracker.get_session_usage(session_id)
+        return {"success": True, "data": usage_data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stt/sessions")
+async def get_sessions_stt_summary(days: int = 7):
+    """Get summary of all sessions with STT usage"""
+    try:
+        sessions = await stt_tracker.get_sessions_summary(days)
+        return {"success": True, "data": sessions}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/stt/update-session")
+async def update_stt_session_id(
+    temp_session_id: str = Form(...),
+    real_session_id: str = Form(...)
+):
+    """Update temp session ID with real session ID after chat session is created"""
+    try:
+        result = await db.stt_usage.update_many(
+            {"session_id": temp_session_id},
+            {"$set": {"session_id": real_session_id}}
+        )
+        return {
+            "success": True, 
+            "updated_records": result.modified_count,
+            "message": f"Updated {result.modified_count} STT records from {temp_session_id} to {real_session_id}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
